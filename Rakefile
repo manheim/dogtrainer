@@ -1,29 +1,46 @@
 require 'rubygems'
-require 'manheim_helpers/gem/raketasks'
+require 'bundler'
+require 'bundler/setup'
+require 'bundler/gem_tasks'
+require 'rake/clean'
+require 'yard'
+require 'rspec/core/rake_task'
+require 'rubocop/rake_task'
 
-ManheimHelpers::Gem::RakeTasks.install_tasks(
-  File.join(File.expand_path(File.dirname(__FILE__)), 'dogtrainer.gemspec'),
-  # don't tag git repo and push tag after publish:
-  # git_tag: false,
-  # don't fail publish if newer or equal version already in Artifactory:
-  # check_version: false,
-    # restrict publishing on CircleCI to repos owned by 'Manheim':
-  circle_username: 'Manheim',
-  # restrict publishing from CircleCI to repos named 'dogtrainer':
-  circle_reponame: 'dogtrainer',
-    # restrict publishing from CircleCI to the 'master' branch:
-  circle_branch: 'master',
-  # don't populate ~/.gem/credentials using ``ARTIFACTORY_USER`` and
-  #   `ARTIFACTORY_PASSWORD`` to retrieve creds from Artifactory:
-  # set_credentials: false,
-  # don't add YARD documentation Rake tasks:
-  # add_yard: false,
-  # don't add RSpec Rake tasks:
-  # add_rspec: false,
-  # don't add RuboCop Rake tasks:
-  # add_rubocop: false,
-  # don't add a 'help' Rake task to run 'rake -T':
-  # add_help: false,
-  # don't make the 'help' task the default:
-  # help_default: false
-)
+CLOBBER.include 'pkg'
+
+desc 'Run RuboCop on the lib directory'
+RuboCop::RakeTask.new(:rubocop) do |task|
+  task.fail_on_error = true
+end
+
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.rspec_opts = ['--require', 'spec_helper']
+  t.pattern = 'spec/**/*_spec.rb'
+end
+
+namespace :yard do
+  YARD::Rake::YardocTask.new do |t|
+    t.name = 'generate'
+    t.files   = ['lib/**/*.rb'] # optional
+    t.options = ['--private', '--protected'] # optional
+    t.stats_options = ['--list-undoc'] # optional
+  end
+
+  desc 'serve YARD documentation on port 8808 (restart to regenerate)'
+  task serve: [:generate] do
+    puts 'Running YARD server on port 8808'
+    puts 'Use Ctrl+C to exit server.'
+    YARD::CLI::Server.run
+  end
+end
+
+desc 'Run specs and rubocop before pushing'
+task pre_commit: [:spec, :rubocop]
+
+desc 'Display the list of available rake tasks'
+task :help do
+  system('rake -T')
+end
+
+task default: [:help]

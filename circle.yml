@@ -6,24 +6,17 @@ dependencies:
     - sudo add-apt-repository -y ppa:git-core/ppa && sudo apt-get update && sudo apt-get install git
   override:
     - 'bundle install'
-    - 'rvm 1.9.3-p550 exec bundle install'
     - 'rvm 2.0.0-p598 exec bundle install'
-    - 'rvm 2.2.0 exec bundle install'
+    - 'rvm 2.1.8 exec bundle install'
+    - 'rvm 2.2.5 exec bundle install'
+    - 'rvm 2.3.1 exec bundle install'
 
 test:
   override:
     - 'bundle exec rake spec'
     - 'bundle exec rake rubocop'
-    - 'rvm 1.9.3-p550 exec bundle exec rake spec'
     - 'rvm 2.0.0-p598 exec bundle exec rake spec'
-    - 'rvm 2.2.0 exec bundle exec rake spec'
-
-deployment:
-  rubygems:
-    branch: master
-    commands:
-      - 'git config --global user.email "circleci@manheim.com"'
-      - 'git config --global user.name CircleCI'
-      - bundle exec rake publish
-      - bundle exec rake yard:generate
-      - bundle exec rake yard:publish_ghpages
+    - 'rvm 2.1.8 exec bundle exec rake spec'
+    - 'rvm 2.2.5 exec bundle exec rake spec'
+    - 'rvm 2.3.1 exec bundle exec rake spec'
+    - 'bundle exec rake yard:generate'
