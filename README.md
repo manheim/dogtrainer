@@ -1,6 +1,6 @@
 # dogtrainer
 
-Build of master branch: [![Circle CI](http://circleci.com/gh/Manheim/dogtrainer/tree/master.svg?style=svg)](http://circleci.com/gh/Manheim/dogtrainer/tree/master)
+Build of master branch: [![CircleCI](https://circleci.com/gh/manheim/dogtrainer.svg?style=svg)](https://circleci.com/gh/manheim/dogtrainer)
 
 Documentation: [http://www.rubydoc.info/gems/dogtrainer/](http://www.rubydoc.info/gems/dogtrainer/)
 
