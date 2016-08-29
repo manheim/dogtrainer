@@ -155,3 +155,8 @@ dog.upsert_timeboard("My Account-Unique Board Name", graphs)
 9. Deployment is done locally, with ``bundle exec rake release``.
 
 When running inside CircleCI, rspec will place reports and artifacts under the right locations for CircleCI to archive them. When running outside of CircleCI, coverage reports will be written to ``coverage/`` and test reports (HTML and JUnit XML) will be written to ``results/``.
+
+## License
+
+The gem is available as open source under the terms of the
+[MIT License](http://opensource.org/licenses/MIT).
