@@ -34,10 +34,9 @@ To use the DataDog helper, require the module and create an instance of the clas
 passing it the required configuration information.
 
 ```ruby
-require 'dogapi'
-require 'manheim_helpers/datadog'
+require 'dogtrainer'
 
-dog = ManheimHelpers::DataDog.new(api_key, app_key, notify_to)
+dog = DogTrainer::API.new(api_key, app_key, notify_to)
 ```
 
 * __api_key__ is your DataDog API Key, which you can find at https://app.datadoghq.com/account/settings#api

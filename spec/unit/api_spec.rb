@@ -15,7 +15,7 @@ describe DogTrainer::API do
       expect(subject.instance_variable_get('@timeboards')).to be_nil
       expect(subject.instance_variable_get('@screenboards')).to be_nil
     end
-    it 'includes ManheimHelpers::Logging' do
+    it 'includes DogTrainer::Logging' do
       expect(subject).to respond_to(:logger)
       expect(subject).to respond_to(:logger_name)
     end
