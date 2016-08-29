@@ -4,10 +4,12 @@ require File.expand_path('../lib/dogtrainer/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors     = ['jantman']
   gem.email       = ['jason@jasonantman.com']
-  gem.summary     = 'Wrapper around DataDog dogapi gem to simplify creation and management of Monitors and Boards'
+  gem.summary     = 'Wrapper around DataDog dogapi gem to simplify creation ' \
+    'and management of Monitors and Boards'
   gem.description = [
-    'Provides a slightly opinionated wrapper class around DataDog\'s dogapi to ',
-    'simplify the creation and updating of Monitors, TimeBoards and ScreenBoards.'
+    'Provides a slightly opinionated wrapper class around DataDog\'s dogapi to',
+    ' simplify the creation and updating of Monitors, TimeBoards and',
+    'ScreenBoards.'
   ].join(' ')
   gem.homepage    = 'http://github.com/Manheim/dogtrainer'
   gem.license     = 'MIT'

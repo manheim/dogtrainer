@@ -3,8 +3,8 @@ require 'dogapi/v1'
 require 'dogtrainer/logging'
 
 module DogTrainer
-  # Helper methods to upsert/ensure existence and configuration of DataDog Monitors,
-  # TimeBoards and ScreenBoards.
+  # Helper methods to upsert/ensure existence and configuration of DataDog
+  # Monitors, TimeBoards and ScreenBoards.
   class API
     include DogTrainer::Logging
 
@@ -12,17 +12,18 @@ module DogTrainer
     #
     # @param api_key [String] DataDog API Key
     # @param app_key [String] DataDog Application Key
-    # @param notify_to [String] DataDog notification recpipent string for monitors. This is
-    #   generally one or more @-prefixed DataDog users or notification recipients. It can be
-    #   set to nil if you are only managing screenboards and timeboards. For
-    #   further information, see:
+    # @param notify_to [String] DataDog notification recpipent string for
+    #   monitors. This is generally one or more @-prefixed DataDog users or
+    #   notification recipients. It can be set to nil if you are only managing
+    #   screenboards and timeboards. For further information, see:
     #   http://docs.datadoghq.com/monitoring/#notifications
-    # @param repo_path [String] Git or HTTP URL to the repository containing code that
-    #   calls this class. Will be added to notification messages so that humans know where
-    #   to make changes to monitors. If nil, the return value of #get_repo_path
+    # @param repo_path [String] Git or HTTP URL to the repository containing
+    #   code that calls this class. Will be added to notification messages so
+    #   that humans know where to make changes to monitors. If nil, the return
+    #   value of #get_repo_path
     def initialize(api_key, app_key, notify_to, repo_path = nil)
       logger.debug 'initializing DataDog API client'
-      @dog = Dogapi::Client.new(api_key, application_key = app_key)
+      @dog = Dogapi::Client.new(api_key, app_key)
       @monitors = nil
       @timeboards = nil
       @screenboards = nil
@@ -35,13 +36,14 @@ module DogTrainer
       end
     end
 
-    # Return a human-usable string identifying where to make changes to the resources
-    # created by this class. Returns the first of:
+    # Return a human-usable string identifying where to make changes to the
+    # resources created by this class. Returns the first of:
     #
     # 1. ``GIT_URL`` environment variable, if set and not empty
     # 2. ``CIRCLE_REPOSITORY_URL`` environment variable, if set and not empty
-    # 3. If the code calling this class is part of a git repository on disk and ``git`` is
-    #    present on the system and in PATH, the URL of the first remote for the repository.
+    # 3. If the code calling this class is part of a git repository on disk and
+    #    ``git`` is present on the system and in PATH, the URL of the first
+    #    remote for the repository.
     #
     # If none of these are found, an error will be raised.
     def get_repo_path
@@ -96,10 +98,16 @@ module DogTrainer
     # @param comparison [String] comparison operator or description for metric
     #   vs threshold; i.e. ">=", "<=", "=", "<", etc.
     def generate_messages(metric_desc, comparison)
-      message = "{{#is_alert}}'#{metric_desc}' should be #{comparison} {{threshold}}, but is {{value}}.{{/is_alert}}\n" \
-        "{{#is_recovery}}'#{metric_desc}' recovered  (current value {{value}} is #{comparison} threshold of {{threshold}}).{{/is_recovery}}\n" \
-        "(monitor and threshold configuration for this alert is managed by #{@repo_path}) #{@notify_to}"
-      escalation = "'#{metric_desc}' is still in error state (current value {{value}} is #{comparison} threshold of {{threshold}})"
+      message = [
+        "{{#is_alert}}'#{metric_desc}' should be #{comparison} {{threshold}}, ",
+        "but is {{value}}.{{/is_alert}}\n",
+        "{{#is_recovery}}'#{metric_desc}' recovered  (current value {{value}} ",
+        "is #{comparison} threshold of {{threshold}}).{{/is_recovery}}\n",
+        '(monitor and threshold configuration for this alert is managed by ',
+        "#{@repo_path}) #{@notify_to}"
+      ].join('')
+      escalation = "'#{metric_desc}' is still in error state (current value " \
+        "{{value}} is #{comparison} threshold of {{threshold}})"
       [message, escalation]
     end
 
@@ -107,18 +115,29 @@ module DogTrainer
     # configuration. For further information, see:
     # http://docs.datadoghq.com/api/#monitors
     #
-    # @param name [String] name for the monitor; must be unique per DataDog account
+    # @param name [String] name for the monitor; must be unique per DataDog
+    #   account
     # @param message [String] alert/notification message for the monitor
     # @param query [String] query for the monitor to evaluate
     # @param threshold [Float] evaluation threshold for the monitor
     # @param [Hash] options
-    # @option options [String] :escalation_message optional escalation message for
-    #   escalation notifications. Defaults to nil.
-    # @option options [Boolean] :alert_no_data whether or not to alert on lack of
-    #   data. Defaults to true.
-    # @option options [String] :mon_type type of monitor as defined in DataDog API
-    #   docs. Defaults to 'metric alert'.
-    def params_for_monitor(name, message, query, threshold, options = { escalation_message: nil, alert_no_data: true, mon_type: 'metric alert' })
+    # @option options [String] :escalation_message optional escalation message
+    #   for escalation notifications. Defaults to nil.
+    # @option options [Boolean] :alert_no_data whether or not to alert on lack
+    #   of data. Defaults to true.
+    # @option options [String] :mon_type type of monitor as defined in DataDog
+    #   API docs. Defaults to 'metric alert'.
+    def params_for_monitor(
+      name,
+      message,
+      query,
+      threshold,
+      options = {
+        escalation_message: nil,
+        alert_no_data: true,
+        mon_type: 'metric alert'
+      }
+    )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
       monitor_data = {
@@ -139,38 +158,48 @@ module DogTrainer
           'no_data_timeframe' => 20
         }
       }
-      monitor_data['options']['escalation_message'] = options[:escalation_message] unless options[:escalation_message].nil?
+      monitor_data['options']['escalation_message'] = \
+        options[:escalation_message] unless options[:escalation_message].nil?
       monitor_data
     end
 
-    # Create or update a monitor in DataDog with the given name and data/params. This
-    # method handles either creating the monitor if one with the same name doesn't
-    # already exist in the specified DataDog account, or else updating an existing
-    # monitor with the same name if one exists but the parameters differ.
+    # Create or update a monitor in DataDog with the given name and data/params.
+    # This method handles either creating the monitor if one with the same name
+    # doesn't already exist in the specified DataDog account, or else updating
+    # an existing monitor with the same name if one exists but the parameters
+    # differ.
     #
     # For further information on parameters and options, see:
     # http://docs.datadoghq.com/api/#monitors
     #
-    # This method calls #generate_messages to build the notification messages and
-    # #params_for_monitor to generate the parameters.
+    # This method calls #generate_messages to build the notification messages
+    # and #params_for_monitor to generate the parameters.
     #
-    # @param mon_name [String] name for the monitor; must be unique per DataDog account
+    # @param mon_name [String] name for the monitor; must be unique per DataDog
+    #   account
     # @param query [String] query for the monitor to evaluate
     # @param threshold [Float] evaluation threshold for the monitor
     # @param comparator [String] comparison operator for metric vs threshold,
     #   describing the inverse of the query. I.e. if the query is checking for
     #   "< 100", then the comparator would be ">=".
     # @param [Hash] options
-    # @option options [Boolean] :alert_no_data whether or not to alert on lack of
-    #   data. Defaults to true.
-    # @option options [String] :mon_type type of monitor as defined in DataDog API
-    #   docs. Defaults to 'metric alert'.
-    def upsert_monitor(mon_name, query, threshold, comparator, options = { alert_no_data: true, mon_type: 'metric alert' })
+    # @option options [Boolean] :alert_no_data whether or not to alert on lack
+    #   of data. Defaults to true.
+    # @option options [String] :mon_type type of monitor as defined in DataDog
+    #   API docs. Defaults to 'metric alert'.
+    def upsert_monitor(
+      mon_name,
+      query,
+      threshold,
+      comparator,
+      options = { alert_no_data: true, mon_type: 'metric alert' }
+    )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
       message, escalation = generate_messages(mon_name, comparator)
       mon_params = params_for_monitor(mon_name, message, query, threshold,
-                                      escalation_message: escalation, alert_no_data: options[:alert_no_data],
+                                      escalation_message: escalation,
+                                      alert_no_data: options[:alert_no_data],
                                       mon_type: options[:mon_type])
       logger.info "Upserting monitor: #{mon_name}"
       monitor = get_existing_monitor_by_name(mon_name)
@@ -184,7 +213,8 @@ module DogTrainer
           break
         end
         next unless monitor[k] != mon_params[k]
-        logger.debug "\tneeds update based on difference in key #{k}; current='#{monitor[k]}' desired='#{mon_params[k]}'"
+        logger.debug "\tneeds update based on difference in key #{k}; " \
+          "current='#{monitor[k]}' desired='#{mon_params[k]}'"
         do_update = true
         break
       end
@@ -204,8 +234,8 @@ module DogTrainer
     # Create a monitor that doesn't already exist; return its id
     #
     # @param mon_name [String] mane of the monitor to create
-    # @param mon_params [Hash] params to pass to the DataDog API call. Must include
-    #   "type" and "query" keys.
+    # @param mon_params [Hash] params to pass to the DataDog API call. Must
+    #   include "type" and "query" keys.
     def create_monitor(_mon_name, mon_params)
       res = @dog.monitor(mon_params['type'], mon_params['query'], mon_params)
       if res[0] == '200'
@@ -226,7 +256,8 @@ module DogTrainer
         @monitors = @dog.get_all_monitors(group_states: 'all')
         logger.info "Found #{@monitors[1].length} existing monitors in DataDog"
         if @monitors[1].empty?
-          logger.error 'ERROR: Docker API call returned no existing monitors. Something is wrong.'
+          logger.error 'ERROR: Docker API call returned no existing monitors.' \
+            ' Something is wrong.'
           exit 1
         end
       end
@@ -258,7 +289,11 @@ module DogTrainer
         'title' => title
       }
       queries.each do |q|
-        d['definition']['requests'] << { 'q' => q, 'conditional_formats' => [], 'type' => 'line' }
+        d['definition']['requests'] << {
+          'q' => q,
+          'conditional_formats' => [],
+          'type' => 'line'
+        }
       end
       unless markers.empty?
         d['definition']['markers'] = []
@@ -366,9 +401,11 @@ module DogTrainer
     def get_existing_timeboard_by_name(dash_name)
       if @timeboards.nil?
         @timeboards = @dog.get_dashboards
-        puts "Found #{@timeboards[1]['dashes'].length} existing timeboards in DataDog"
+        puts "Found #{@timeboards[1]['dashes'].length} existing timeboards " \
+          'in DataDog'
         if @timeboards[1]['dashes'].empty?
-          puts 'ERROR: Docker API call returned no existing timeboards. Something is wrong.'
+          puts 'ERROR: Docker API call returned no existing timeboards. ' \
+            'Something is wrong.'
           exit 1
         end
       end
@@ -378,14 +415,16 @@ module DogTrainer
       nil
     end
 
-    # get all screenboards from DataDog; return the one named ``dash_name`` or nil
-    # returns the screenboard definition hash from the DataDog API
+    # get all screenboards from DataDog; return the one named ``dash_name`` or
+    # nil returns the screenboard definition hash from the DataDog API
     def get_existing_screenboard_by_name(dash_name)
       if @screenboards.nil?
         @screenboards = @dog.get_all_screenboards
-        puts "Found #{@screenboards[1]['screenboards'].length} existing screenboards in DataDog"
+        puts "Found #{@screenboards[1]['screenboards'].length} existing " \
+          'screenboards in DataDog'
         if @screenboards[1]['screenboards'].empty?
-          puts 'ERROR: Docker API call returned no existing screenboards. Something is wrong.'
+          puts 'ERROR: Docker API call returned no existing screenboards. ' \
+            'Something is wrong.'
           exit 1
         end
       end
