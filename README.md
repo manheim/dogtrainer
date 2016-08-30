@@ -39,11 +39,24 @@ require 'dogtrainer'
 dog = DogTrainer::API.new(api_key, app_key, notify_to)
 ```
 
+or
+
+```ruby
+require 'dogtrainer'
+
+dog = DogTrainer::API.new(api_key, app_key, notify_to, 'string describing where to update monitors or boards')
+```
+
 * __api_key__ is your DataDog API Key, which you can find at https://app.datadoghq.com/account/settings#api
 * __app_key__ is an application-specific key, which should be generated separately for every app or
   service that uses this class. These can be generated and seen at https://app.datadoghq.com/account/settings#api
 * __notify_to__ is the string specifying DataDog monitor recipients in "@" form. If you are only managing Timeboards or
   Screenboards (not Monitors), this can be ``nil``.
+* __repo_path__ is a string that will be included in all Monitor notification messages and TimeBoard/ScreenBoard descriptions,
+  telling users where to find the code that created the DataDog resource. This is intended to alert users to code-managed
+  items that shouldn't be manually changed. If this parameter is not specified, it will be obtained from the first usable
+  and present value of: the ``GIT_URL`` environment variable, the ``CIRCLE_REPOSITORY_URL`` or the first remote URL found
+  by running ``git config --local -l`` in the directory that contains the code calling this constructor.
 
 ### Usage Examples
 
