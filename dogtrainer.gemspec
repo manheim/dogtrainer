@@ -15,6 +15,7 @@ Gem::Specification.new do |gem|
   gem.license     = 'MIT'
 
   gem.add_runtime_dependency 'dogapi'
+  gem.add_runtime_dependency 'log4r', '>= 1.0'
 
   # awful, but these are to allow use with ruby 2.1.x
   gem.add_development_dependency 'ruby_dep', '1.3.1'
@@ -35,7 +36,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'guard-rubocop', '~> 1.2'
   gem.add_development_dependency 'guard-yard', '~> 2.1'
   gem.add_development_dependency 'json', '~> 1.8.3'
-  gem.add_development_dependency 'log4r', '>= 1.0'
   gem.add_development_dependency 'rake', '~> 10'
   gem.add_development_dependency 'retries', '~> 0.0.5'
   gem.add_development_dependency 'rspec', '~> 3'
