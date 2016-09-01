@@ -130,6 +130,10 @@ module DogTrainer
     #   of data. Defaults to true.
     # @option options [String] :mon_type type of monitor as defined in DataDog
     #   API docs. Defaults to 'metric alert'.
+    # @option options [Integer] :renotify_interval the number of minutes after
+    #   the last notification before a monitor will re-notify on the current
+    #   status. It will re-notify only if not resolved. Default: 60. Set to nil
+    #   to disable re-notification.
     def params_for_monitor(
       name,
       message,
@@ -138,11 +142,13 @@ module DogTrainer
       options = {
         escalation_message: nil,
         alert_no_data: true,
-        mon_type: 'metric alert'
+        mon_type: 'metric alert',
+        renotify_interval: 60
       }
     )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
+      options[:renotify_interval] = 60 unless options.key?(:renotify_interval)
 
       # handle threshold hash
       thresh = if threshold.is_a?(Hash)
@@ -165,7 +171,7 @@ module DogTrainer
           'thresholds' => thresh,
           'require_full_window' => false,
           'notify_no_data' => options[:alert_no_data],
-          'renotify_interval' => 60,
+          'renotify_interval' => options[:renotify_interval],
           'no_data_timeframe' => 20
         }
       }
@@ -201,20 +207,31 @@ module DogTrainer
     #   of data. Defaults to true.
     # @option options [String] :mon_type type of monitor as defined in DataDog
     #   API docs. Defaults to 'metric alert'.
+    # @option options [Integer] :renotify_interval the number of minutes after
+    #   the last notification before a monitor will re-notify on the current
+    #   status. It will re-notify only if not resolved. Default: 60. Set to nil
+    #   to disable re-notification.
     def upsert_monitor(
       mon_name,
       query,
       threshold,
       comparator,
-      options = { alert_no_data: true, mon_type: 'metric alert' }
+      options = {
+        alert_no_data: true,
+        mon_type: 'metric alert',
+        renotify_interval: 60
+      }
     )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
+      options[:renotify_interval] = 60 unless options.key?(:renotify_interval)
       message, escalation = generate_messages(mon_name, comparator)
+      rno = options[:renotify_interval]
       mon_params = params_for_monitor(mon_name, message, query, threshold,
                                       escalation_message: escalation,
                                       alert_no_data: options[:alert_no_data],
-                                      mon_type: options[:mon_type])
+                                      mon_type: options[:mon_type],
+                                      renotify_interval: rno)
       logger.info "Upserting monitor: #{mon_name}"
       monitor = get_existing_monitor_by_name(mon_name)
       return create_monitor(mon_name, mon_params) if monitor.nil?
