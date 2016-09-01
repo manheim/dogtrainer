@@ -119,7 +119,10 @@ module DogTrainer
     #   account
     # @param message [String] alert/notification message for the monitor
     # @param query [String] query for the monitor to evaluate
-    # @param threshold [Float] evaluation threshold for the monitor
+    # @param threshold [Float or Hash] evaluation threshold for the monitor;
+    #   if a Float is passed, it will be provided as the ``critical`` threshold;
+    #   otherise, a Hash in the form taken by the DataDog API should be provided
+    #   (``critical``, ``warning`` and/or ``ok`` keys, Float values)
     # @param [Hash] options
     # @option options [String] :escalation_message optional escalation message
     #   for escalation notifications. Defaults to nil.
@@ -140,6 +143,14 @@ module DogTrainer
     )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
+
+      # handle threshold hash
+      thresh = if threshold.is_a?(Hash)
+                 threshold
+               else
+                 { 'critical' => threshold }
+               end
+
       monitor_data = {
         'name' => name,
         'type' => options[:mon_type],
@@ -151,7 +162,7 @@ module DogTrainer
           'locked' => false,
           'timeout_h' => 0,
           'silenced' => {},
-          'thresholds' => { 'critical' => threshold },
+          'thresholds' => thresh,
           'require_full_window' => false,
           'notify_no_data' => options[:alert_no_data],
           'renotify_interval' => 60,
@@ -178,7 +189,10 @@ module DogTrainer
     # @param mon_name [String] name for the monitor; must be unique per DataDog
     #   account
     # @param query [String] query for the monitor to evaluate
-    # @param threshold [Float] evaluation threshold for the monitor
+    # @param threshold [Float or Hash] evaluation threshold for the monitor;
+    #   if a Float is passed, it will be provided as the ``critical`` threshold;
+    #   otherise, a Hash in the form taken by the DataDog API should be provided
+    #   (``critical``, ``warning`` and/or ``ok`` keys, Float values)
     # @param comparator [String] comparison operator for metric vs threshold,
     #   describing the inverse of the query. I.e. if the query is checking for
     #   "< 100", then the comparator would be ">=".
