@@ -247,6 +247,41 @@ describe DogTrainer::API do
                mon_type: 'foo'
       )).to eq(expected)
     end
+    it 'passes through a threshold Hash' do
+      expected = {
+        'name' => 'monname',
+        'type' => 'foo',
+        'query' => 'my_query',
+        'message' => 'my_msg',
+        'tags' => [],
+        'options' => {
+          'notify_audit' => false,
+          'locked' => false,
+          'timeout_h' => 0,
+          'silenced' => {},
+          'thresholds' => {
+            'warning' => 50,
+            'critical' => 123.4,
+            'ok' => 20
+          },
+          'require_full_window' => false,
+          'notify_no_data' => true,
+          'renotify_interval' => 60,
+          'no_data_timeframe' => 20
+        }
+      }
+      expect(subject.params_for_monitor(
+               'monname',
+               'my_msg',
+               'my_query',
+               {
+                 'warning' => 50,
+                 'critical' => 123.4,
+                 'ok' => 20
+               },
+               mon_type: 'foo'
+      )).to eq(expected)
+    end
     it 'sets notify_no_data to false if provided in options' do
       expected = {
         'name' => 'monname',
@@ -335,6 +370,39 @@ describe DogTrainer::API do
                'mname',
                'my_query',
                123.4,
+               '>='
+      )).to eq('12345')
+    end
+    it 'handles a hash threshold' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(nil)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'msg', 'my_query', { 'warning' => 5.3, 'ok' => 1 },
+              escalation_message: 'esc',
+              alert_no_data: true,
+              mon_type: 'metric alert')
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to receive(:create_monitor).once
+        .with('mname', params)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               { 'warning' => 5.3, 'ok' => 1 },
                '>='
       )).to eq('12345')
     end
