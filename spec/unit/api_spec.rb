@@ -706,6 +706,143 @@ describe DogTrainer::API do
                renotify_interval: 100
       )).to eq('monid')
     end
+    it 'handles sparse options, with only message' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(existing)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'esc',
+                                                 alert_no_data: true,
+                                                 mon_type: 'metric alert',
+                                                 renotify_interval: 60)
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to_not receive(:create_monitor)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               123.4,
+               '>=',
+               message: 'foo'
+      )).to eq('monid')
+    end
+    it 'handles sparse options, with only escalation_message' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(existing)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'bar',
+                                                 alert_no_data: true,
+                                                 mon_type: 'metric alert',
+                                                 renotify_interval: 60)
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to_not receive(:create_monitor)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               123.4,
+               '>=',
+               escalation_message: 'bar'
+      )).to eq('monid')
+    end
+    it 'handles sparse options, with only message and escalation_message' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(existing)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
+                                                 alert_no_data: true,
+                                                 mon_type: 'metric alert',
+                                                 renotify_interval: 60)
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to_not receive(:create_monitor)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               123.4,
+               '>=',
+               message: 'foo',
+               escalation_message: 'bar'
+      )).to eq('monid')
+    end
+    it 'handles sparse options, with only escalation_message set to nil' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(existing)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'msg', 'my_query', 123.4, alert_no_data: true,
+                                                 mon_type: 'metric alert',
+                                                 renotify_interval: 60,
+                                                 escalation_message: nil)
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to_not receive(:create_monitor)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               123.4,
+               '>=',
+               escalation_message: nil
+      )).to eq('monid')
+    end
     it 'handles all options' do
       params = { 'foo' => 'bar', 'baz' => 'blam' }
       existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
@@ -724,7 +861,7 @@ describe DogTrainer::API do
       expect(dog).to_not receive(:update_monitor)
       expect(subject).to receive(:generate_messages).once.with('mname', '>=')
       expect(subject).to receive(:params_for_monitor).once
-        .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
+        .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: false,
                                                  mon_type: 'service check',
                                                  renotify_interval: 10)
@@ -739,7 +876,9 @@ describe DogTrainer::API do
                '>=',
                renotify_interval: 10,
                alert_no_data: false,
-               mon_type: 'service check'
+               mon_type: 'service check',
+               message: 'foo',
+               escalation_message: 'bar'
       )).to eq('monid')
     end
   end
