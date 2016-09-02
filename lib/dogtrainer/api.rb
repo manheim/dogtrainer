@@ -97,7 +97,27 @@ module DogTrainer
     #   monitored.
     # @param comparison [String] comparison operator or description for metric
     #   vs threshold; i.e. ">=", "<=", "=", "<", etc.
-    def generate_messages(metric_desc, comparison)
+    # @option mon_type [String] type of monitor as defined in DataDog
+    #   API docs.
+    def generate_messages(metric_desc, comparison, mon_type)
+      if mon_type == 'service check'
+        message = [
+          "{{#is_alert}}'#{metric_desc}' is FAILING: {{check_message}}",
+          "{{/is_alert}}\n",
+          "{{#is_warning}}'#{metric_desc}' is WARNING: {{check_message}}",
+          "{{/is_warning}}\n",
+          "{{#is_recovery}}'#{metric_desc}' recovered: {{check_message}}",
+          "{{/is_recovery}}\n",
+          "{{#is_no_data}}'#{metric_desc}' is not reporting data",
+          "{{/is_no_data}}\n",
+          # repo path and notify to
+          '(monitor and threshold configuration for this alert is managed by ',
+          "#{@repo_path}) #{@notify_to}"
+        ].join('')
+        escalation = "'#{metric_desc}' is still in error state: " \
+          '{{check_message}}'
+        return [message, escalation]
+      end
       message = [
         "{{#is_alert}}'#{metric_desc}' should be #{comparison} {{threshold}}, ",
         "but is {{value}}.{{/is_alert}}\n",
@@ -119,7 +139,10 @@ module DogTrainer
     #   account
     # @param message [String] alert/notification message for the monitor
     # @param query [String] query for the monitor to evaluate
-    # @param threshold [Float] evaluation threshold for the monitor
+    # @param threshold [Float or Hash] evaluation threshold for the monitor;
+    #   if a Float is passed, it will be provided as the ``critical`` threshold;
+    #   otherise, a Hash in the form taken by the DataDog API should be provided
+    #   (``critical``, ``warning`` and/or ``ok`` keys, Float values)
     # @param [Hash] options
     # @option options [String] :escalation_message optional escalation message
     #   for escalation notifications. Defaults to nil.
@@ -127,6 +150,10 @@ module DogTrainer
     #   of data. Defaults to true.
     # @option options [String] :mon_type type of monitor as defined in DataDog
     #   API docs. Defaults to 'metric alert'.
+    # @option options [Integer] :renotify_interval the number of minutes after
+    #   the last notification before a monitor will re-notify on the current
+    #   status. It will re-notify only if not resolved. Default: 60. Set to nil
+    #   to disable re-notification.
     def params_for_monitor(
       name,
       message,
@@ -135,11 +162,21 @@ module DogTrainer
       options = {
         escalation_message: nil,
         alert_no_data: true,
-        mon_type: 'metric alert'
+        mon_type: 'metric alert',
+        renotify_interval: 60
       }
     )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
+      options[:renotify_interval] = 60 unless options.key?(:renotify_interval)
+
+      # handle threshold hash
+      thresh = if threshold.is_a?(Hash)
+                 threshold
+               else
+                 { 'critical' => threshold }
+               end
+
       monitor_data = {
         'name' => name,
         'type' => options[:mon_type],
@@ -151,10 +188,10 @@ module DogTrainer
           'locked' => false,
           'timeout_h' => 0,
           'silenced' => {},
-          'thresholds' => { 'critical' => threshold },
+          'thresholds' => thresh,
           'require_full_window' => false,
           'notify_no_data' => options[:alert_no_data],
-          'renotify_interval' => 60,
+          'renotify_interval' => options[:renotify_interval],
           'no_data_timeframe' => 20
         }
       }
@@ -178,7 +215,10 @@ module DogTrainer
     # @param mon_name [String] name for the monitor; must be unique per DataDog
     #   account
     # @param query [String] query for the monitor to evaluate
-    # @param threshold [Float] evaluation threshold for the monitor
+    # @param threshold [Float or Hash] evaluation threshold for the monitor;
+    #   if a Float is passed, it will be provided as the ``critical`` threshold;
+    #   otherise, a Hash in the form taken by the DataDog API should be provided
+    #   (``critical``, ``warning`` and/or ``ok`` keys, Float values)
     # @param comparator [String] comparison operator for metric vs threshold,
     #   describing the inverse of the query. I.e. if the query is checking for
     #   "< 100", then the comparator would be ">=".
@@ -187,20 +227,50 @@ module DogTrainer
     #   of data. Defaults to true.
     # @option options [String] :mon_type type of monitor as defined in DataDog
     #   API docs. Defaults to 'metric alert'.
+    # @option options [Integer] :renotify_interval the number of minutes after
+    #   the last notification before a monitor will re-notify on the current
+    #   status. It will re-notify only if not resolved. Default: 60. Set to nil
+    #   to disable re-notification.
+    # @option options [String] :message alert/notification message for the
+    #   monitor; if omitted, will be generated by #generate_messages
+    # @option options [String] :escalation_message optional escalation message
+    #   for escalation notifications. If omitted, will be generated by
+    #   #generate_messages; explicitly set to nil to not add an escalation
+    #   message to the monitor.
     def upsert_monitor(
       mon_name,
       query,
       threshold,
       comparator,
-      options = { alert_no_data: true, mon_type: 'metric alert' }
+      options = {
+        alert_no_data: true,
+        mon_type: 'metric alert',
+        renotify_interval: 60,
+        message: nil
+      }
     )
       options[:alert_no_data] = true unless options.key?(:alert_no_data)
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
-      message, escalation = generate_messages(mon_name, comparator)
+      options[:renotify_interval] = 60 unless options.key?(:renotify_interval)
+
+      msg, esc = generate_messages(mon_name, comparator, options[:mon_type])
+      message = if options[:message].nil?
+                  msg
+                else
+                  options[:message]
+                end
+      escalation = if options.key?(:escalation_message)
+                     options[:escalation_message]
+                   else
+                     esc
+                   end
+
+      rno = options[:renotify_interval]
       mon_params = params_for_monitor(mon_name, message, query, threshold,
                                       escalation_message: escalation,
                                       alert_no_data: options[:alert_no_data],
-                                      mon_type: options[:mon_type])
+                                      mon_type: options[:mon_type],
+                                      renotify_interval: rno)
       logger.info "Upserting monitor: #{mon_name}"
       monitor = get_existing_monitor_by_name(mon_name)
       return create_monitor(mon_name, mon_params) if monitor.nil?
