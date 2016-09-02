@@ -100,6 +100,24 @@ module DogTrainer
     # @option mon_type [String] type of monitor as defined in DataDog
     #   API docs.
     def generate_messages(metric_desc, comparison, mon_type)
+      if mon_type == 'service check'
+        message = [
+          "{{#is_alert}}'#{metric_desc}' is FAILING: {{check_message}}",
+          "{{/is_alert}}\n",
+          "{{#is_warning}}'#{metric_desc}' is WARNING: {{check_message}}",
+          "{{/is_warning}}\n",
+          "{{#is_recovery}}'#{metric_desc}' recovered: {{check_message}}",
+          "{{/is_recovery}}\n",
+          "{{#is_no_data}}'#{metric_desc}' is not reporting data",
+          "{{/is_no_data}}\n",
+          # repo path and notify to
+          '(monitor and threshold configuration for this alert is managed by ',
+          "#{@repo_path}) #{@notify_to}"
+        ].join('')
+        escalation = "'#{metric_desc}' is still in error state: " \
+          '{{check_message}}'
+        return [message, escalation]
+      end
       message = [
         "{{#is_alert}}'#{metric_desc}' should be #{comparison} {{threshold}}, ",
         "but is {{value}}.{{/is_alert}}\n",

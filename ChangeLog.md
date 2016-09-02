@@ -5,6 +5,8 @@ Version 0.1.1
   - handle a ``threshold`` Hash passed to ``DogTrainer::API.upsert_monitor`` and
     ``DogTrainer::API.params_for_monitor``
   - expose ``renotify_interval`` as an option on ``DogTrainer::API.upsert_monitor``
+  - pass ``mon_type`` through to ``DogTrainer::API.generate_messages`` and generate
+    different messages for service checks (which have warning or alert)
 
 Version 0.1.0
 

@@ -148,21 +148,44 @@ describe DogTrainer::API do
     end
   end
   describe '#generate_messages' do
-    it 'returns the appropriate message' do
-      expected = "{{#is_alert}}'mydesc' should be comp {{threshold}},"
-      expected += " but is {{value}}.{{/is_alert}}\n"
-      expected += "{{#is_recovery}}'mydesc' recovered  (current value "
-      expected += '{{value}} is comp threshold of {{threshold}}).'
-      expected += "{{/is_recovery}}\n(monitor and threshold configuration "
-      expected += 'for this alert is managed by my_repo_path) @my-notify-to'
-      msg, = subject.generate_messages('mydesc', 'comp', 3)
-      expect(msg).to eq(expected)
+    context 'mon_type metric alert' do
+      it 'returns the appropriate message' do
+        expected = "{{#is_alert}}'mydesc' should be comp {{threshold}},"
+        expected += " but is {{value}}.{{/is_alert}}\n"
+        expected += "{{#is_recovery}}'mydesc' recovered  (current value "
+        expected += '{{value}} is comp threshold of {{threshold}}).'
+        expected += "{{/is_recovery}}\n(monitor and threshold configuration "
+        expected += 'for this alert is managed by my_repo_path) @my-notify-to'
+        msg, = subject.generate_messages('mydesc', 'comp', 'metric alert')
+        expect(msg).to eq(expected)
+      end
+      it 'returns the appropriate message' do
+        escalation = "'mydesc' is still in error state (current value {{value}}"
+        escalation += ' is comp threshold of {{threshold}})'
+        _, esc = subject.generate_messages('mydesc', 'comp', 'metric alert')
+        expect(esc).to eq(escalation)
+      end
     end
-    it 'returns the appropriate message' do
-      escalation = "'mydesc' is still in error state (current value {{value}}"
-      escalation += ' is comp threshold of {{threshold}})'
-      _, esc = subject.generate_messages('mydesc', 'comp', 3)
-      expect(esc).to eq(escalation)
+    context 'mon_type service check' do
+      it 'returns the appropriate message' do
+        expected = "{{#is_alert}}'mydesc' is FAILING: {{check_message}}" \
+          "{{/is_alert}}\n"
+        expected += "{{#is_warning}}'mydesc' is WARNING: {{check_message}}" \
+          "{{/is_warning}}\n"
+        expected += "{{#is_recovery}}'mydesc' recovered: {{check_message}}" \
+          "{{/is_recovery}}\n"
+        expected += "{{#is_no_data}}'mydesc' is not reporting data" \
+          "{{/is_no_data}}\n"
+        expected += '(monitor and threshold configuration '
+        expected += 'for this alert is managed by my_repo_path) @my-notify-to'
+        msg, = subject.generate_messages('mydesc', 'comp', 'service check')
+        expect(msg).to eq(expected)
+      end
+      it 'returns the appropriate message' do
+        escalation = "'mydesc' is still in error state: {{check_message}}"
+        _, esc = subject.generate_messages('mydesc', 'comp', 'service check')
+        expect(esc).to eq(escalation)
+      end
     end
   end
   describe '#params_for_monitor' do
