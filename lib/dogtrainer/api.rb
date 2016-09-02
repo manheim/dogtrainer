@@ -97,7 +97,9 @@ module DogTrainer
     #   monitored.
     # @param comparison [String] comparison operator or description for metric
     #   vs threshold; i.e. ">=", "<=", "=", "<", etc.
-    def generate_messages(metric_desc, comparison)
+    # @option mon_type [String] type of monitor as defined in DataDog
+    #   API docs.
+    def generate_messages(metric_desc, comparison, mon_type)
       message = [
         "{{#is_alert}}'#{metric_desc}' should be #{comparison} {{threshold}}, ",
         "but is {{value}}.{{/is_alert}}\n",
@@ -233,7 +235,7 @@ module DogTrainer
       options[:mon_type] = 'metric alert' unless options.key?(:mon_type)
       options[:renotify_interval] = 60 unless options.key?(:renotify_interval)
 
-      msg, esc = generate_messages(mon_name, comparator)
+      msg, esc = generate_messages(mon_name, comparator, options[:mon_type])
       message = if options[:message].nil?
                   msg
                 else

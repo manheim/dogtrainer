@@ -155,13 +155,13 @@ describe DogTrainer::API do
       expected += '{{value}} is comp threshold of {{threshold}}).'
       expected += "{{/is_recovery}}\n(monitor and threshold configuration "
       expected += 'for this alert is managed by my_repo_path) @my-notify-to'
-      msg, = subject.generate_messages('mydesc', 'comp')
+      msg, = subject.generate_messages('mydesc', 'comp', 3)
       expect(msg).to eq(expected)
     end
     it 'returns the appropriate message' do
       escalation = "'mydesc' is still in error state (current value {{value}}"
       escalation += ' is comp threshold of {{threshold}})'
-      _, esc = subject.generate_messages('mydesc', 'comp')
+      _, esc = subject.generate_messages('mydesc', 'comp', 3)
       expect(esc).to eq(escalation)
     end
   end
@@ -384,7 +384,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -417,7 +418,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', { 'warning' => 5.3, 'ok' => 1 },
               escalation_message: 'esc',
@@ -452,7 +454,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -497,7 +500,8 @@ describe DogTrainer::API do
 
       expect(dog).to receive(:update_monitor).once
         .with('monid', 'my_query', params)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -537,7 +541,8 @@ describe DogTrainer::API do
 
       expect(dog).to receive(:update_monitor).once
         .with('monid', 'my_query', params)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -585,7 +590,8 @@ describe DogTrainer::API do
 
       expect(dog).to receive(:update_monitor).once
         .with('monid', 'my_query', params)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -620,7 +626,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: false,
@@ -654,7 +661,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'foobar')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -688,7 +696,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -722,7 +731,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
@@ -756,7 +766,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: true,
@@ -790,7 +801,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: true,
@@ -825,7 +837,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'msg', 'my_query', 123.4, alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -859,7 +872,8 @@ describe DogTrainer::API do
         .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once.with('mname', '>=')
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'service check')
       expect(subject).to receive(:params_for_monitor).once
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: false,
