@@ -164,6 +164,54 @@ dog.upsert_monitor(
 )
 ```
 
+##### Muting and Unmuting monitors
+
+Mute a single monitor by ID number (12345):
+
+```ruby
+dog.mute_monitor_by_id(12345)
+```
+
+Mute a single monitor by ID number (12345) for one hour:
+
+```ruby
+ts = Time.now + 3600
+dog.mute_monitor_by_id(12345, end_timestamp: ts.to_i)
+```
+
+Unmute a single monitor by ID number (12345):
+
+```ruby
+dog.unmute_monitor_by_id(12345)
+```
+
+Mute a single monitor by name for one hour:
+
+```ruby
+ts = Time.now + 3600
+dog.mute_monitor_by_name('my whole monitor name', end_timestamp: ts.to_i)
+```
+
+Unmute a single monitor by name:
+
+```ruby
+dog.unmute_monitor_by_name('my whole monitor name')
+```
+
+Mute all monitors matching regex /ELB/ for one hour (this also accepts a String
+  in addition to Regexp objects):
+
+```ruby
+ts = Time.now + 3600
+dog.mute_monitor_by_regex(/ELB/, end_timestamp: ts.to_i)
+```
+
+Unmute all monitors matching /foo/ (provided as a String instead of Regexp):
+
+```ruby
+dog.unmute_monitor_by_regex('foo')
+```
+
 #### Boards
 
 Create a TimeBoard with a handful of graphs about the "MY_ELB_NAME" ELB,
