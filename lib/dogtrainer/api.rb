@@ -333,9 +333,9 @@ module DogTrainer
       if @monitors.nil?
         @monitors = @dog.get_all_monitors(group_states: 'all')
         logger.info "Found #{@monitors[1].length} existing monitors in DataDog"
-        if @monitors[1].length < 1
-          raise RuntimeError, 'ERROR: DataDog API call returned no existing ' \
-            'monitors. Something is wrong.'
+        if @monitors[1].empty?
+          raise 'ERROR: DataDog API call returned no existing monitors. ' \
+            'Something is wrong.'
         end
       end
       @monitors[1]
@@ -356,7 +356,7 @@ module DogTrainer
     # @param [Hash] options
     # @option options [Integer] or [Fixnum] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
-    def mute_monitor_by_id(mon_id, options = {end_timestamp: nil})
+    def mute_monitor_by_id(mon_id, options = { end_timestamp: nil })
       if options.fetch(:end_timestamp, nil).nil?
         logger.info "Muting monitor by ID #{mon_id}"
         @dog.mute_monitor(mon_id)
@@ -383,23 +383,22 @@ module DogTrainer
     # @option options [Integer] or [Fixnum] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
     # @raise [RuntimeError] raised if the specified monitor name can't be found
-    def mute_monitor_by_name(mon_name, options = {end_timestamp: nil})
+    def mute_monitor_by_name(mon_name, options = { end_timestamp: nil })
       mon = get_existing_monitor_by_name(mon_name)
-      if mon.nil?
-        raise RuntimeError, "ERROR: Could not find monitor with name #{mon_name}"
-      end
+      raise "ERROR: Could not find monitor with name #{mon_name}" if mon.nil?
       if options.fetch(:end_timestamp, nil).nil?
         logger.info "Muting monitor by name #{mon_name} (#{mon['id']})"
         @dog.mute_monitor(mon['id'])
       else
         end_ts = options[:end_timestamp]
-        logger.info "Muting monitor by name #{mon_name} (#{mon['id']}) until #{end_ts}"
+        logger.info "Muting monitor by name #{mon_name} (#{mon['id']}) " \
+          "until #{end_ts}"
         @dog.mute_monitor(mon['id'], end: end_ts)
       end
     end
 
-    # Mute all monitors with names matching the specified regex, with an optional
-    # duration
+    # Mute all monitors with names matching the specified regex, with an
+    # optional duration.
     #
     # @example mute monitors with names matching /myapp/ indefinitely
     #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
@@ -409,15 +408,17 @@ module DogTrainer
     #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
     #    dog.mute_monitor_by_regex('foo')
     #
-    # @example mute monitors with names matching /myapp/ until 2016-09-17 01:39:52-00:00
+    # @example mute monitors with names matching /myapp/ until 2016-09-17
+    #   01:39:52-00:00
     #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
     #    dog.mute_monitor_by_regex(/myapp/, end_timestamp: 1474076393)
     #
-    # @param mon_name_regex [String] or [Regexp] regex to match monitor names against
+    # @param mon_name_regex [String] or [Regexp] regex to match monitor names
+    #   against
     # @param [Hash] options
     # @option options [Integer] or [Fixnum] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
-    def mute_monitors_by_regex(mon_name_regex, options = {end_timestamp: nil})
+    def mute_monitors_by_regex(mon_name_regex, options = { end_timestamp: nil })
       if mon_name_regex.class != Regexp
         mon_name_regex = Regexp.new(mon_name_regex)
       end
@@ -425,12 +426,12 @@ module DogTrainer
         logger.info "Muting monitors by regex #{mon_name_regex.source}"
         end_ts = nil
       else
-        logger.info "Muting monitors by regex #{mon_name_regex.source} until #{end_ts}"
+        logger.info "Muting monitors by regex #{mon_name_regex.source} " \
+          "until #{end_ts}"
         end_ts = options[:end_timestamp]
       end
       logger.debug "Searching for monitors matching: #{mon_name_regex.source}"
       get_monitors.each do |mon|
-        #puts "MONITOR: #{mon['name']} (#{mon['id']})"
         if mon['name'] =~ mon_name_regex
           logger.info "Muting monitor '#{mon['name']}' (#{mon['id']})"
           mute_monitor_by_id(mon['id'], end_timestamp: end_ts)
@@ -453,9 +454,7 @@ module DogTrainer
     def unmute_monitor_by_name(mon_name)
       mon = get_existing_monitor_by_name(mon_name)
       logger.info "Unmuting monitor by name #{mon_name}"
-      if mon.nil?
-        raise RuntimeError, "ERROR: Could not find monitor with name #{mon_name}"
-      end
+      raise "ERROR: Could not find monitor with name #{mon_name}" if mon.nil?
       unmute_monitor_by_id(mon['id'])
     end
 

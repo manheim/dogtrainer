@@ -963,7 +963,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:get_all_monitors).once.with(group_states: 'all')
-      expect(subject.get_monitors()).to eq(monitors[1])
+      expect(subject.get_monitors).to eq(monitors[1])
       expect(subject.instance_variable_get('@monitors')).to eq(monitors)
     end
     it 'does not retrieve monitors if they are cached' do
@@ -981,18 +981,18 @@ describe DogTrainer::API do
       subject.instance_variable_set('@monitors', monitors)
 
       expect(dog).to_not receive(:get_all_monitors)
-      expect(subject.get_monitors()).to eq(monitors[1])
+      expect(subject.get_monitors).to eq(monitors[1])
       expect(subject.instance_variable_get('@monitors')).to eq(monitors)
     end
     it 'raises if monitors list is empty' do
-      monitors = [ '200', [] ]
+      monitors = ['200', []]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_monitors).with(any_args)
         .and_return(monitors)
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:get_all_monitors).once.with(group_states: 'all')
-      expect {subject.get_monitors() }
+      expect { subject.get_monitors }
         .to raise_error(RuntimeError, 'ERROR: DataDog API call returned no ' \
           'existing monitors. Something is wrong.')
     end
@@ -1003,8 +1003,8 @@ describe DogTrainer::API do
       allow(dog).to receive(:mute_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
 
-      expect(dog).to receive(:mute_monitor).once.with(12345)
-      subject.mute_monitor_by_id(12345)
+      expect(dog).to receive(:mute_monitor).once.with(12_345)
+      subject.mute_monitor_by_id(12_345)
     end
     it 'calls dog.mute_monitor with id and timestamp if specified' do
       dog = double(Dogapi::Client)
@@ -1012,15 +1012,13 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:mute_monitor).once
-        .with(12345, {end: 6789})
-      subject.mute_monitor_by_id(12345, end_timestamp: 6789)
+        .with(12_345, end: 6_789)
+      subject.mute_monitor_by_id(12_345, end_timestamp: 6_789)
     end
   end
   describe '#mute_monitor_by_name' do
     it 'calls dog.mute_monitor with id' do
-      monitor = {
-        'id' => 5678,
-      }
+      monitor = { 'id' => 5_678 }
       dog = double(Dogapi::Client)
       allow(dog).to receive(:mute_monitor).with(any_args)
       allow(subject).to receive(:get_existing_monitor_by_name)
@@ -1029,13 +1027,11 @@ describe DogTrainer::API do
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mymon')
-      expect(dog).to receive(:mute_monitor).once.with(5678)
+      expect(dog).to receive(:mute_monitor).once.with(5_678)
       subject.mute_monitor_by_name('mymon')
     end
     it 'calls dog.mute_monitor with id and timestamp if specified' do
-      monitor = {
-        'id' => 5678,
-      }
+      monitor = { 'id' => 5_678 }
       dog = double(Dogapi::Client)
       allow(dog).to receive(:mute_monitor).with(any_args)
       allow(subject).to receive(:get_existing_monitor_by_name)
@@ -1044,8 +1040,8 @@ describe DogTrainer::API do
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mymon')
-      expect(dog).to receive(:mute_monitor).once.with(5678, {end: 1234})
-      subject.mute_monitor_by_name('mymon', end_timestamp: 1234)
+      expect(dog).to receive(:mute_monitor).once.with(5_678, end: 1_234)
+      subject.mute_monitor_by_name('mymon', end_timestamp: 1_234)
     end
     it 'raises error if monitor cannot be found' do
       dog = double(Dogapi::Client)
@@ -1065,10 +1061,10 @@ describe DogTrainer::API do
   describe '#mute_monitors_by_regex' do
     it 'mutes all matching monitors when passed a regex' do
       monitors = [
-        {'name' => 'mymonitor', 'id' => 1},
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3},
-        {'name' => 'other monitor foo', 'id' => 4}
+        { 'name' => 'mymonitor', 'id' => 1 },
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 },
+        { 'name' => 'other monitor foo', 'id' => 4 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:mute_monitor_by_id)
@@ -1082,10 +1078,10 @@ describe DogTrainer::API do
     end
     it 'mutes all matching monitors when passed a string' do
       monitors = [
-        {'name' => 'mymonitor', 'id' => 1},
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3},
-        {'name' => 'other monitor foo', 'id' => 4}
+        { 'name' => 'mymonitor', 'id' => 1 },
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 },
+        { 'name' => 'other monitor foo', 'id' => 4 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:mute_monitor_by_id)
@@ -1099,25 +1095,25 @@ describe DogTrainer::API do
     end
     it 'mutes all monitors with an end_timestamp if specified' do
       monitors = [
-        {'name' => 'mymonitor', 'id' => 1},
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3},
-        {'name' => 'other monitor foo', 'id' => 4}
+        { 'name' => 'mymonitor', 'id' => 1 },
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 },
+        { 'name' => 'other monitor foo', 'id' => 4 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:mute_monitor_by_id)
 
       expect(subject).to receive(:get_monitors).once
       expect(subject).to receive(:mute_monitor_by_id).once
-        .with(1, end_timestamp: 1234)
+        .with(1, end_timestamp: 1_234)
       expect(subject).to receive(:mute_monitor_by_id).once
-        .with(4, end_timestamp: 1234)
-      subject.mute_monitors_by_regex('monitor', end_timestamp: 1234)
+        .with(4, end_timestamp: 1_234)
+      subject.mute_monitors_by_regex('monitor', end_timestamp: 1_234)
     end
     it 'does not mute any monitors if there are no matches' do
       monitors = [
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3}
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:mute_monitor_by_id)
@@ -1134,15 +1130,13 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:unmute_monitor).once
-        .with(12345, {:all_scopes=>true})
-      subject.unmute_monitor_by_id(12345)
+        .with(12_345, all_scopes: true)
+      subject.unmute_monitor_by_id(12_345)
     end
   end
   describe '#unmute_monitor_by_name' do
     it 'calls dog.unmute_monitor with id' do
-      monitor = {
-        'id' => 5678,
-      }
+      monitor = { 'id' => 5_678 }
       allow(subject).to receive(:unmute_monitor_by_id).with(any_args)
       allow(subject).to receive(:get_existing_monitor_by_name)
         .and_return(monitor)
@@ -1150,7 +1144,7 @@ describe DogTrainer::API do
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mymon')
       expect(subject).to receive(:unmute_monitor_by_id).once
-        .with(5678)
+        .with(5_678)
       subject.unmute_monitor_by_name('mymon')
     end
     it 'raises error if monitor cannot be found' do
@@ -1169,10 +1163,10 @@ describe DogTrainer::API do
   describe '#unmute_monitors_by_regex' do
     it 'unmutes all matching monitors when passed a regex' do
       monitors = [
-        {'name' => 'mymonitor', 'id' => 1},
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3},
-        {'name' => 'other monitor foo', 'id' => 4}
+        { 'name' => 'mymonitor', 'id' => 1 },
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 },
+        { 'name' => 'other monitor foo', 'id' => 4 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:unmute_monitor_by_id)
@@ -1184,10 +1178,10 @@ describe DogTrainer::API do
     end
     it 'unmutes all matching monitors when passed a string' do
       monitors = [
-        {'name' => 'mymonitor', 'id' => 1},
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3},
-        {'name' => 'other monitor foo', 'id' => 4}
+        { 'name' => 'mymonitor', 'id' => 1 },
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 },
+        { 'name' => 'other monitor foo', 'id' => 4 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:unmute_monitor_by_id)
@@ -1199,8 +1193,8 @@ describe DogTrainer::API do
     end
     it 'does not unmute any monitors if there are no matches' do
       monitors = [
-        {'name' => 'foo', 'id' => 2},
-        {'name' => 'bar', 'id' => 3}
+        { 'name' => 'foo', 'id' => 2 },
+        { 'name' => 'bar', 'id' => 3 }
       ]
       allow(subject).to receive(:get_monitors).and_return(monitors)
       allow(subject).to receive(:unmute_monitor_by_id)
@@ -1227,7 +1221,6 @@ describe DogTrainer::API do
     end
     it 'returns nil if no monitors can be found' do
       monitors = ['200', []]
-      dog = double(Dogapi::Client)
       allow(subject).to receive(:get_monitors).and_return(monitors[1])
 
       expect(subject).to receive(:get_monitors).once
