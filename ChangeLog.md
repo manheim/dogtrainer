@@ -1,3 +1,7 @@
+Version 0.2.0
+
+  - add support to mute and unmute monitors by id, name or regex
+
 Version 0.1.1
 
   - add ``message`` and ``escalation_message`` options to ``DogTrainer::API.upsert_monitor``

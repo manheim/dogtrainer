@@ -322,19 +322,156 @@ module DogTrainer
     #
     # @param mon_name [String] name of the monitor to return
     def get_existing_monitor_by_name(mon_name)
+      get_monitors.each do |mon|
+        return mon if mon['name'] == mon_name
+      end
+      nil
+    end
+
+    # Get all monitors from DataDog, caching them in an instance variable.
+    def get_monitors
       if @monitors.nil?
         @monitors = @dog.get_all_monitors(group_states: 'all')
         logger.info "Found #{@monitors[1].length} existing monitors in DataDog"
         if @monitors[1].empty?
-          logger.error 'ERROR: Docker API call returned no existing monitors.' \
-            ' Something is wrong.'
-          exit 1
+          raise 'ERROR: DataDog API call returned no existing monitors. ' \
+            'Something is wrong.'
         end
       end
-      @monitors[1].each do |mon|
-        return mon if mon['name'] == mon_name
+      @monitors[1]
+    end
+
+    # Mute the monitor identified by the specified unique ID, with an optional
+    # duration.
+    #
+    # @example mute monitor 12345 indefinitely
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_id(12345)
+    #
+    # @example mute monitor 12345 until 2016-09-17 01:39:52-00:00
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_id(12345, end_timestamp: 1474076393)
+    #
+    # @param mon_id [Integer] ID of the monitor to mute
+    # @param [Hash] options
+    # @option options [Integer] :end_timestamp optional timestamp
+    #  for when the mute should end; Integer POSIX timestamp.
+    def mute_monitor_by_id(mon_id, options = { end_timestamp: nil })
+      if options.fetch(:end_timestamp, nil).nil?
+        logger.info "Muting monitor by ID #{mon_id}"
+        @dog.mute_monitor(mon_id)
+      else
+        end_ts = options[:end_timestamp]
+        logger.info "Muting monitor by ID #{mon_id} until #{end_ts}"
+        @dog.mute_monitor(mon_id, end: end_ts)
       end
-      nil
+    end
+
+    # Mute the monitor identified by the specified name, with an optional
+    # duration.
+    #
+    # @example mute monitor named 'My Monitor' indefinitely
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_name('My Monitor')
+    #
+    # @example mute monitor named 'My Monitor' until 2016-09-17 01:39:52-00:00
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_name('My Monitor', end_timestamp: 1474076393)
+    #
+    # @param mon_name [String] name of the monitor to mute
+    # @param [Hash] options
+    # @option options [Integer] :end_timestamp optional timestamp
+    #  for when the mute should end; Integer POSIX timestamp.
+    # @raise [RuntimeError] raised if the specified monitor name can't be found
+    def mute_monitor_by_name(mon_name, options = { end_timestamp: nil })
+      mon = get_existing_monitor_by_name(mon_name)
+      raise "ERROR: Could not find monitor with name #{mon_name}" if mon.nil?
+      if options.fetch(:end_timestamp, nil).nil?
+        logger.info "Muting monitor by name #{mon_name} (#{mon['id']})"
+        @dog.mute_monitor(mon['id'])
+      else
+        end_ts = options[:end_timestamp]
+        logger.info "Muting monitor by name #{mon_name} (#{mon['id']}) " \
+          "until #{end_ts}"
+        @dog.mute_monitor(mon['id'], end: end_ts)
+      end
+    end
+
+    # Mute all monitors with names matching the specified regex, with an
+    # optional duration.
+    #
+    # @example mute monitors with names matching /myapp/ indefinitely
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_regex(/myapp/)
+    #
+    # @example mute monitors with names containing 'foo' indefinitely
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_regex('foo')
+    #
+    # @example mute monitors with names matching /myapp/ until 2016-09-17
+    #   01:39:52-00:00
+    #    dog = DogTrainer::API.new(api_key, app_key, notify_to)
+    #    dog.mute_monitor_by_regex(/myapp/, end_timestamp: 1474076393)
+    #
+    # @param mon_name_regex [String] or [Regexp] regex to match monitor names
+    #   against
+    # @param [Hash] options
+    # @option options [Integer] :end_timestamp optional timestamp
+    #  for when the mute should end; Integer POSIX timestamp.
+    def mute_monitors_by_regex(mon_name_regex, options = { end_timestamp: nil })
+      if mon_name_regex.class != Regexp
+        mon_name_regex = Regexp.new(mon_name_regex)
+      end
+      if options.fetch(:end_timestamp, nil).nil?
+        logger.info "Muting monitors by regex #{mon_name_regex.source}"
+        end_ts = nil
+      else
+        logger.info "Muting monitors by regex #{mon_name_regex.source} " \
+          "until #{end_ts}"
+        end_ts = options[:end_timestamp]
+      end
+      logger.debug "Searching for monitors matching: #{mon_name_regex.source}"
+      get_monitors.each do |mon|
+        if mon['name'] =~ mon_name_regex
+          logger.info "Muting monitor '#{mon['name']}' (#{mon['id']})"
+          mute_monitor_by_id(mon['id'], end_timestamp: end_ts)
+        end
+      end
+    end
+
+    # Unute the monitor identified by the specified unique ID.
+    #
+    # @param mon_id [Integer] ID of the monitor to mute
+    def unmute_monitor_by_id(mon_id)
+      logger.info "Unmuting monitor by ID #{mon_id}"
+      @dog.unmute_monitor(mon_id, all_scopes: true)
+    end
+
+    # Unmute the monitor identified by the specified name.
+    #
+    # @param mon_name [String] name of the monitor to mute
+    # @raise [RuntimeError] raised if the specified monitor name can't be found
+    def unmute_monitor_by_name(mon_name)
+      mon = get_existing_monitor_by_name(mon_name)
+      logger.info "Unmuting monitor by name #{mon_name}"
+      raise "ERROR: Could not find monitor with name #{mon_name}" if mon.nil?
+      unmute_monitor_by_id(mon['id'])
+    end
+
+    # Unmute all monitors with names matching the specified regex.
+    #
+    # @param mon_name_regex [String] regex to match monitor names against
+    def unmute_monitors_by_regex(mon_name_regex)
+      if mon_name_regex.class != Regexp
+        mon_name_regex = Regexp.new(mon_name_regex)
+      end
+      logger.info "Unmuting monitors by regex #{mon_name_regex.source}"
+      get_monitors.each do |mon|
+        if mon['name'] =~ mon_name_regex
+          logger.info "Unmuting monitor '#{mon['name']}' (#{mon['id']})"
+          unmute_monitor_by_id(mon['id'])
+        end
+      end
     end
 
     ###########################################
