@@ -354,7 +354,7 @@ module DogTrainer
     #
     # @param mon_id [Integer] ID of the monitor to mute
     # @param [Hash] options
-    # @option options [Integer] or [Fixnum] :end_timestamp optional timestamp
+    # @option options [Integer] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
     def mute_monitor_by_id(mon_id, options = { end_timestamp: nil })
       if options.fetch(:end_timestamp, nil).nil?
@@ -380,7 +380,7 @@ module DogTrainer
     #
     # @param mon_name [String] name of the monitor to mute
     # @param [Hash] options
-    # @option options [Integer] or [Fixnum] :end_timestamp optional timestamp
+    # @option options [Integer] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
     # @raise [RuntimeError] raised if the specified monitor name can't be found
     def mute_monitor_by_name(mon_name, options = { end_timestamp: nil })
@@ -416,7 +416,7 @@ module DogTrainer
     # @param mon_name_regex [String] or [Regexp] regex to match monitor names
     #   against
     # @param [Hash] options
-    # @option options [Integer] or [Fixnum] :end_timestamp optional timestamp
+    # @option options [Integer] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
     def mute_monitors_by_regex(mon_name_regex, options = { end_timestamp: nil })
       if mon_name_regex.class != Regexp
