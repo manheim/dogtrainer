@@ -203,13 +203,13 @@ Mute all monitors matching regex /ELB/ for one hour (this also accepts a String
 
 ```ruby
 ts = Time.now + 3600
-dog.mute_monitor_by_regex(/ELB/, end_timestamp: ts.to_i)
+dog.mute_monitors_by_regex(/ELB/, end_timestamp: ts.to_i)
 ```
 
 Unmute all monitors matching /foo/ (provided as a String instead of Regexp):
 
 ```ruby
-dog.unmute_monitor_by_regex('foo')
+dog.unmute_monitors_by_regex('foo')
 ```
 
 #### Boards
