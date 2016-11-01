@@ -4,9 +4,9 @@ Build of master branch: [![CircleCI](https://circleci.com/gh/manheim/dogtrainer.
 
 Documentation: [http://www.rubydoc.info/gems/dogtrainer/](http://www.rubydoc.info/gems/dogtrainer/)
 
-Wrapper around DataDog dogapi gem to simplify creation and management of Monitors and Boards.
+Wrapper around Datadog dogapi gem to simplify creation and management of Monitors and Boards.
 
-This class provides methods to manage (upsert / ensure the existence and configuration of) DataDog
+This class provides methods to manage (upsert / ensure the existence and configuration of) Datadog
 Monitors and TimeBoards/ScreenBoards.
 
 ## Installation
@@ -30,7 +30,7 @@ gem.add_runtime_dependency 'dogtrainer'
 
 ## Usage
 
-To use the DataDog helper, require the module and create an instance of the class,
+To use the Datadog helper, require the module and create an instance of the class,
 passing it the required configuration information.
 
 ```ruby
@@ -47,13 +47,13 @@ require 'dogtrainer'
 dog = DogTrainer::API.new(api_key, app_key, notify_to, 'string describing where to update monitors or boards')
 ```
 
-* __api_key__ is your DataDog API Key, which you can find at https://app.datadoghq.com/account/settings#api
+* __api_key__ is your Datadog API Key, which you can find at https://app.datadoghq.com/account/settings#api
 * __app_key__ is an application-specific key, which should be generated separately for every app or
   service that uses this class. These can be generated and seen at https://app.datadoghq.com/account/settings#api
-* __notify_to__ is the string specifying DataDog monitor recipients in "@" form. If you are only managing Timeboards or
+* __notify_to__ is the string specifying Datadog monitor recipients in "@" form. If you are only managing Timeboards or
   Screenboards (not Monitors), this can be ``nil``.
 * __repo_path__ is a string that will be included in all Monitor notification messages and TimeBoard/ScreenBoard descriptions,
-  telling users where to find the code that created the DataDog resource. This is intended to alert users to code-managed
+  telling users where to find the code that created the Datadog resource. This is intended to alert users to code-managed
   items that shouldn't be manually changed. If this parameter is not specified, it will be obtained from the first usable
   and present value of: the ``GIT_URL`` environment variable, the ``CIRCLE_REPOSITORY_URL`` or the first remote URL found
   by running ``git config --local -l`` in the directory that contains the code calling this constructor.
@@ -243,12 +243,12 @@ graphs = [
       "max:aws.elb.latency{host:#{elb_name}}"
     ]
   ),
-  # Instance CPU Utilization from DataDog/EC2 integration
+  # Instance CPU Utilization from Datadog/EC2 integration
   dog.graphdef(
     "Instance EC2 CPU Utilization",
     "avg:aws.ec2.cpuutilization{name:#{instance_name}}"
   ),
-  # Instance Free Memory from DataDog Agent on instance
+  # Instance Free Memory from Datadog Agent on instance
   dog.graphdef(
     "Instance Free Memory",
     "avg:system.mem.free{name:#{instance_name}}"
