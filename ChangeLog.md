@@ -1,3 +1,12 @@
+Version 0.3.0
+
+  - Added ``DogTrainer::DogApiException`` custom exception class, subclass of ``StandardError``.
+  - ``DogTrainer::API`` methods ``mute_monitor_by_id``, ``mute_monitor_by_name``,
+    ``mute_monitors_by_regex``, ``unmute_monitor_by_id``, ``unmute_monitor_by_name``,
+    ``unmute_monitors_by_regex``, ``upsert_timeboard`` and ``upsert_screenboard``
+    now raise an ``DogTrainer::DogApiException`` if the Datadog API response status
+    code indicates an error.
+
 Version 0.2.0
 
   - add support to mute and unmute monitors by id, name or regex
