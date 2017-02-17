@@ -25,3 +25,6 @@ Style/AccessorMethodName:
 Style/PreferredHashMethods:
   Exclude:
     - 'lib/dogtrainer/api.rb'
+
+Metrics/BlockLength:
+  Max: 2000
