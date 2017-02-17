@@ -60,6 +60,39 @@ describe DogTrainer::API do
       expect(x.instance_variable_get('@repo_path')).to eq('foo/bar')
     end
   end
+  describe '#check_dog_result' do
+    let(:response) { { 'foo' => 'bar' } }
+    context 'with default accepted_codes' do
+      describe 'when code is in accepted array' do
+        it 'does not raise an exception' do
+          expect { subject.check_dog_result(['200', response]) }
+            .to_not raise_error
+        end
+      end
+      describe 'when code is not in accepted array' do
+        it 'raises an exception' do
+          expect { subject.check_dog_result(['400', response]) }
+            .to raise_error DogTrainer::DogApiException,
+                            /Datadog API call returned status 400/
+        end
+      end
+    end
+    context 'with custom accepted_codes' do
+      describe 'when code is in accepted array' do
+        it 'does not raise an exception' do
+          expect { subject.check_dog_result(['404', response], %w(200 404)) }
+            .to_not raise_error
+        end
+      end
+      describe 'when code is not in accepted array' do
+        it 'raises an exception' do
+          expect { subject.check_dog_result(['400', response], %w(200 404)) }
+            .to raise_error DogTrainer::DogApiException,
+                            /Datadog API call returned status 400/
+        end
+      end
+    end
+  end
   describe '#get_repo_path' do
     it 'calls #get_git_url_for_directory if ENV vars are not set' do
       allow(ENV).to receive(:has_key?).with('GIT_URL').and_return(false)
@@ -1000,19 +1033,25 @@ describe DogTrainer::API do
   describe '#mute_monitor_by_id' do
     it 'calls dog.mute_monitor with id' do
       dog = double(Dogapi::Client)
-      allow(dog).to receive(:mute_monitor).with(any_args)
+      resp = double
+      allow(dog).to receive(:mute_monitor).with(any_args).and_return(resp)
+      allow(subject).to receive(:check_dog_result)
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:mute_monitor).once.with(12_345)
+      expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_id(12_345)
     end
     it 'calls dog.mute_monitor with id and timestamp if specified' do
       dog = double(Dogapi::Client)
-      allow(dog).to receive(:mute_monitor).with(any_args)
+      resp = double
+      allow(dog).to receive(:mute_monitor).with(any_args).and_return(resp)
+      allow(subject).to receive(:check_dog_result)
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:mute_monitor).once
         .with(12_345, end: 6_789)
+      expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_id(12_345, end_timestamp: 6_789)
     end
   end
@@ -1020,39 +1059,48 @@ describe DogTrainer::API do
     it 'calls dog.mute_monitor with id' do
       monitor = { 'id' => 5_678 }
       dog = double(Dogapi::Client)
-      allow(dog).to receive(:mute_monitor).with(any_args)
+      resp = double
+      allow(dog).to receive(:mute_monitor).with(any_args).and_return(resp)
       allow(subject).to receive(:get_existing_monitor_by_name)
         .and_return(monitor)
+      allow(subject).to receive(:check_dog_result)
       subject.instance_variable_set('@dog', dog)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mymon')
       expect(dog).to receive(:mute_monitor).once.with(5_678)
+      expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_name('mymon')
     end
     it 'calls dog.mute_monitor with id and timestamp if specified' do
       monitor = { 'id' => 5_678 }
       dog = double(Dogapi::Client)
-      allow(dog).to receive(:mute_monitor).with(any_args)
+      resp = double
+      allow(dog).to receive(:mute_monitor).with(any_args).and_return(resp)
       allow(subject).to receive(:get_existing_monitor_by_name)
         .and_return(monitor)
+      allow(subject).to receive(:check_dog_result)
       subject.instance_variable_set('@dog', dog)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mymon')
       expect(dog).to receive(:mute_monitor).once.with(5_678, end: 1_234)
+      expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_name('mymon', end_timestamp: 1_234)
     end
     it 'raises error if monitor cannot be found' do
       dog = double(Dogapi::Client)
-      allow(dog).to receive(:mute_monitor).with(any_args)
+      resp = double
+      allow(dog).to receive(:mute_monitor).with(any_args).and_return(resp)
       allow(subject).to receive(:get_existing_monitor_by_name)
         .and_return(nil)
+      allow(subject).to receive(:check_dog_result)
       subject.instance_variable_set('@dog', dog)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mymon')
       expect(dog).to_not receive(:mute_monitor)
+      expect(subject).to_not receive(:check_dog_result)
       expect { subject.mute_monitor_by_name('mymon') }
         .to raise_error(RuntimeError,
                         'ERROR: Could not find monitor with name mymon')
@@ -1126,11 +1174,14 @@ describe DogTrainer::API do
   describe '#unmute_monitor_by_id' do
     it 'calls dog.unmute_monitor with id' do
       dog = double(Dogapi::Client)
-      allow(dog).to receive(:unmute_monitor).with(any_args)
+      resp = double
+      allow(dog).to receive(:unmute_monitor).with(any_args).and_return(resp)
+      allow(subject).to receive(:check_dog_result)
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:unmute_monitor).once
         .with(12_345, all_scopes: true)
+      expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.unmute_monitor_by_id(12_345)
     end
   end
@@ -1326,6 +1377,7 @@ describe DogTrainer::API do
       allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
         .and_return(nil)
       allow(subject.logger).to receive(:info).with(any_args)
+      allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
         .with('t')
@@ -1337,6 +1389,7 @@ describe DogTrainer::API do
         )
       expect(dog).to_not receive(:update_dashboard)
       expect(subject.logger).to receive(:info).with('Created timeboard id1')
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_timeboard('t', [1, 2])
     end
     it 'does not update if params are current' do
@@ -1359,12 +1412,14 @@ describe DogTrainer::API do
       allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
+      allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
         .with('t')
       expect(dog).to_not receive(:create_dashboard)
       expect(dog).to_not receive(:update_dashboard)
       expect(subject.logger).to receive(:info).with("\tTimeboard is up-to-date")
+      expect(subject).to_not receive(:check_dog_result)
       subject.upsert_timeboard('t', [1, 2])
     end
     it 'updates if title changed' do
@@ -1382,11 +1437,12 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:create_dashboard).with(any_args)
-      allow(dog).to receive(:update_dashboard).with(any_args)
+      allow(dog).to receive(:update_dashboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
+      allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
         .with('t')
@@ -1399,6 +1455,7 @@ describe DogTrainer::API do
       )
       expect(subject.logger).to receive(:info).with("\tUpdating timeboard id1")
       expect(subject.logger).to receive(:info).with("\tTimeboard updated.")
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_timeboard('t', [1, 2])
     end
     it 'updates if repo_path changed' do
@@ -1416,11 +1473,12 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:create_dashboard).with(any_args)
-      allow(dog).to receive(:update_dashboard).with(any_args)
+      allow(dog).to receive(:update_dashboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
+      allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
         .with('t')
@@ -1433,6 +1491,7 @@ describe DogTrainer::API do
       )
       expect(subject.logger).to receive(:info).with("\tUpdating timeboard id1")
       expect(subject.logger).to receive(:info).with("\tTimeboard updated.")
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_timeboard('t', [1, 2])
     end
     it 'updates if graphs changed' do
@@ -1450,11 +1509,12 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:create_dashboard).with(any_args)
-      allow(dog).to receive(:update_dashboard).with(any_args)
+      allow(dog).to receive(:update_dashboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
+      allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
         .with('t')
@@ -1467,6 +1527,7 @@ describe DogTrainer::API do
       )
       expect(subject.logger).to receive(:info).with("\tUpdating timeboard id1")
       expect(subject.logger).to receive(:info).with("\tTimeboard updated.")
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_timeboard('t', [3, 4])
     end
   end
@@ -1487,6 +1548,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_screenboard_by_name)
         .with(any_args).and_return(nil)
+      allow(subject).to receive(:check_dog_result)
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
@@ -1499,6 +1561,7 @@ describe DogTrainer::API do
         )
       expect(dog).to_not receive(:update_screenboard)
       expect(subject.logger).to receive(:info).with('Created screenboard id1')
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_screenboard('t', [1, 2])
     end
     it 'does nothing if it is up to date' do
@@ -1517,6 +1580,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_screenboard_by_name)
         .with(any_args).and_return(res[1])
+      allow(subject).to receive(:check_dog_result)
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
@@ -1525,6 +1589,7 @@ describe DogTrainer::API do
       expect(dog).to_not receive(:update_screenboard)
       expect(subject.logger).to receive(:info)
         .with("\tScreenboard is up-to-date")
+      expect(subject).to_not receive(:check_dog_result)
       subject.upsert_screenboard('t', [1, 2])
     end
     it 'updates if repo_path in description is different' do
@@ -1539,10 +1604,11 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:create_screenboard).with(any_args)
-      allow(dog).to receive(:update_screenboard).with(any_args)
+      allow(dog).to receive(:update_screenboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_screenboard_by_name)
         .with(any_args).and_return(res[1])
+      allow(subject).to receive(:check_dog_result)
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
@@ -1555,6 +1621,8 @@ describe DogTrainer::API do
           description: 'created by DogTrainer RubyGem via my_repo_path',
           widgets: [1, 2]
         )
+      expect(subject.logger).to receive(:info).with("\tScreenboard updated.")
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_screenboard('t', [1, 2])
     end
     it 'updates if title is different' do
@@ -1569,10 +1637,11 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:create_screenboard).with(any_args)
-      allow(dog).to receive(:update_screenboard).with(any_args)
+      allow(dog).to receive(:update_screenboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_screenboard_by_name)
         .with(any_args).and_return(res[1])
+      allow(subject).to receive(:check_dog_result)
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
@@ -1585,6 +1654,8 @@ describe DogTrainer::API do
           description: 'created by DogTrainer RubyGem via my_repo_path',
           widgets: [1, 2]
         )
+      expect(subject.logger).to receive(:info).with("\tScreenboard updated.")
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_screenboard('t', [1, 2])
     end
     it 'updates if widgets are different' do
@@ -1599,10 +1670,11 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:create_screenboard).with(any_args)
-      allow(dog).to receive(:update_screenboard).with(any_args)
+      allow(dog).to receive(:update_screenboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_screenboard_by_name)
         .with(any_args).and_return(res[1])
+      allow(subject).to receive(:check_dog_result)
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
@@ -1615,6 +1687,8 @@ describe DogTrainer::API do
           description: 'created by DogTrainer RubyGem via my_repo_path',
           widgets: [1, 2]
         )
+      expect(subject.logger).to receive(:info).with("\tScreenboard updated.")
+      expect(subject).to receive(:check_dog_result).once.with(res)
       subject.upsert_screenboard('t', [1, 2])
     end
   end

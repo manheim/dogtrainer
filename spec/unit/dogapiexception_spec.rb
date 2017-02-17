@@ -20,7 +20,9 @@ describe DogTrainer::DogApiException do
   describe 'with errors in content' do
     context 'when errors is an Array' do
       it 'includes errors in the message' do
+        # rubocop:disable Style/WordArray
         x = subject.new(['500', { 'errors' => ['foo', "bar\nbaz"] }])
+        # rubocop:enable Style/WordArray
         expect(x.to_s)
           .to eq("Datadog API call returned status 500:\nfoo\nbar\nbaz\n")
       end
