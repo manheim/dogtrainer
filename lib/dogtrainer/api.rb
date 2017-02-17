@@ -320,7 +320,7 @@ module DogTrainer
 
     # Create a monitor that doesn't already exist; return its id
     #
-    # @param mon_name [String] mane of the monitor to create
+    # @param _mon_name [String] mane of the monitor to create
     # @param mon_params [Hash] params to pass to the DataDog API call. Must
     #   include "type" and "query" keys.
     def create_monitor(_mon_name, mon_params)
