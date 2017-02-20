@@ -1,6 +1,7 @@
 require 'dogapi'
 require 'dogapi/v1'
 require 'dogtrainer/logging'
+require 'dogtrainer/dogapiexception'
 
 module DogTrainer
   # Helper methods to upsert/ensure existence and configuration of DataDog
@@ -34,6 +35,20 @@ module DogTrainer
       else
         @repo_path = repo_path
       end
+    end
+
+    # Check the result of a Dogapi::Client call.
+    #
+    # Dogapi::Client returns responses as arrays, with the first element being
+    # the HTTP response code and the second element being the actual response.
+    #
+    # Check the specified
+    #
+    # @param r [Array] the Dogapi result/response
+    # @param accepted_codes [Array] Array of acceptable (success) HTTP codes
+    # @raise [DogApiException] if the response code indicates an error
+    def check_dog_result(r, accepted_codes = ['200'])
+      raise DogApiException, r unless accepted_codes.include?(r[0])
     end
 
     # Return a human-usable string identifying where to make changes to the
@@ -195,8 +210,10 @@ module DogTrainer
           'no_data_timeframe' => 20
         }
       }
-      monitor_data['options']['escalation_message'] = \
-        options[:escalation_message] unless options[:escalation_message].nil?
+      unless options[:escalation_message].nil?
+        monitor_data['options']['escalation_message'] = \
+          options[:escalation_message]
+      end
       monitor_data
     end
 
@@ -303,7 +320,7 @@ module DogTrainer
 
     # Create a monitor that doesn't already exist; return its id
     #
-    # @param mon_name [String] mane of the monitor to create
+    # @param _mon_name [String] mane of the monitor to create
     # @param mon_params [Hash] params to pass to the DataDog API call. Must
     #   include "type" and "query" keys.
     def create_monitor(_mon_name, mon_params)
@@ -356,14 +373,15 @@ module DogTrainer
     # @param [Hash] options
     # @option options [Integer] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
+    # @raise [DogApiException] if the Datadog API returns an error
     def mute_monitor_by_id(mon_id, options = { end_timestamp: nil })
       if options.fetch(:end_timestamp, nil).nil?
         logger.info "Muting monitor by ID #{mon_id}"
-        @dog.mute_monitor(mon_id)
+        check_dog_result(@dog.mute_monitor(mon_id))
       else
         end_ts = options[:end_timestamp]
         logger.info "Muting monitor by ID #{mon_id} until #{end_ts}"
-        @dog.mute_monitor(mon_id, end: end_ts)
+        check_dog_result(@dog.mute_monitor(mon_id, end: end_ts))
       end
     end
 
@@ -383,17 +401,18 @@ module DogTrainer
     # @option options [Integer] :end_timestamp optional timestamp
     #  for when the mute should end; Integer POSIX timestamp.
     # @raise [RuntimeError] raised if the specified monitor name can't be found
+    # @raise [DogApiException] if the Datadog API returns an error
     def mute_monitor_by_name(mon_name, options = { end_timestamp: nil })
       mon = get_existing_monitor_by_name(mon_name)
       raise "ERROR: Could not find monitor with name #{mon_name}" if mon.nil?
       if options.fetch(:end_timestamp, nil).nil?
         logger.info "Muting monitor by name #{mon_name} (#{mon['id']})"
-        @dog.mute_monitor(mon['id'])
+        check_dog_result(@dog.mute_monitor(mon['id']))
       else
         end_ts = options[:end_timestamp]
         logger.info "Muting monitor by name #{mon_name} (#{mon['id']}) " \
           "until #{end_ts}"
-        @dog.mute_monitor(mon['id'], end: end_ts)
+        check_dog_result(@dog.mute_monitor(mon['id'], end: end_ts))
       end
     end
 
@@ -442,9 +461,10 @@ module DogTrainer
     # Unute the monitor identified by the specified unique ID.
     #
     # @param mon_id [Integer] ID of the monitor to mute
+    # @raise [DogApiException] if the Datadog API returns an error
     def unmute_monitor_by_id(mon_id)
       logger.info "Unmuting monitor by ID #{mon_id}"
-      @dog.unmute_monitor(mon_id, all_scopes: true)
+      check_dog_result(@dog.unmute_monitor(mon_id, all_scopes: true))
     end
 
     # Unmute the monitor identified by the specified name.
@@ -522,12 +542,14 @@ module DogTrainer
     #
     # @param dash_name [String] Account-unique dashboard name
     # @param graphs [Array] Array of graphdefs to add to dashboard
+    # @raise [DogApiException] if the Datadog API returns an error
     def upsert_timeboard(dash_name, graphs)
       logger.info "Upserting timeboard: #{dash_name}"
       desc = "created by DogTrainer RubyGem via #{@repo_path}"
       dash = get_existing_timeboard_by_name(dash_name)
       if dash.nil?
         d = @dog.create_dashboard(dash_name, desc, graphs)
+        check_dog_result(d)
         logger.info "Created timeboard #{d[1]['dash']['id']}"
         return
       end
@@ -548,9 +570,10 @@ module DogTrainer
 
       if needs_update
         logger.info "\tUpdating timeboard #{dash['dash']['id']}"
-        @dog.update_dashboard(
+        d = @dog.update_dashboard(
           dash['dash']['id'], dash_name, desc, graphs
         )
+        check_dog_result(d)
         logger.info "\tTimeboard updated."
       else
         logger.info "\tTimeboard is up-to-date"
@@ -566,6 +589,7 @@ module DogTrainer
     # @param widgets [Array] Array of Hash widget definitions to pass to
     #   the DataDog API. For further information, see:
     #   http://docs.datadoghq.com/api/screenboards/
+    # @raise [DogApiException] if the Datadog API returns an error
     def upsert_screenboard(dash_name, widgets)
       logger.info "Upserting screenboard: #{dash_name}"
       desc = "created by DogTrainer RubyGem via #{@repo_path}"
@@ -574,6 +598,7 @@ module DogTrainer
         d = @dog.create_screenboard(board_title: dash_name,
                                     description: desc,
                                     widgets: widgets)
+        check_dog_result(d)
         logger.info "Created screenboard #{d[1]['id']}"
         return
       end
@@ -594,9 +619,10 @@ module DogTrainer
 
       if needs_update
         logger.info "\tUpdating screenboard #{dash['id']}"
-        @dog.update_screenboard(dash['id'], board_title: dash_name,
-                                            description: desc,
-                                            widgets: widgets)
+        d = @dog.update_screenboard(dash['id'], board_title: dash_name,
+                                                description: desc,
+                                                widgets: widgets)
+        check_dog_result(d)
         logger.info "\tScreenboard updated."
       else
         logger.info "\tScreenboard is up-to-date"
