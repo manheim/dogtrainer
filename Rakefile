@@ -36,7 +36,7 @@ namespace :yard do
 end
 
 desc 'Run specs and rubocop before pushing'
-task pre_commit: [:spec, :rubocop]
+task pre_commit: %i[spec rubocop]
 
 desc 'Display the list of available rake tasks'
 task :help do

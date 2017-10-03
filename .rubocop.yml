@@ -27,4 +27,16 @@ Style/PreferredHashMethods:
     - 'lib/dogtrainer/api.rb'
 
 Metrics/BlockLength:
-  Max: 2000
+  Max: 3000
+
+Lint/RescueWithoutErrorClass:
+  Exclude:
+    - 'lib/dogtrainer/api.rb'
+
+Performance/Caller:
+  Exclude:
+    - 'lib/dogtrainer/api.rb'
+
+Performance/HashEachMethods:
+  Exclude:
+    - 'lib/dogtrainer/api.rb'

@@ -80,13 +80,13 @@ describe DogTrainer::API do
     context 'with custom accepted_codes' do
       describe 'when code is in accepted array' do
         it 'does not raise an exception' do
-          expect { subject.check_dog_result(['404', response], %w(200 404)) }
+          expect { subject.check_dog_result(['404', response], %w[200 404]) }
             .to_not raise_error
         end
       end
       describe 'when code is not in accepted array' do
         it 'raises an exception' do
-          expect { subject.check_dog_result(['400', response], %w(200 404)) }
+          expect { subject.check_dog_result(['400', response], %w[200 404]) }
             .to raise_error DogTrainer::DogApiException,
                             /Datadog API call returned status 400/
         end
@@ -95,26 +95,34 @@ describe DogTrainer::API do
   end
   describe '#get_repo_path' do
     it 'calls #get_git_url_for_directory if ENV vars are not set' do
-      allow(ENV).to receive(:has_key?).with('GIT_URL').and_return(false)
-      allow(ENV).to receive(:has_key?).with('CIRCLE_REPOSITORY_URL')
+      allow(ENV).to receive(:has_key?)
+        .with('GIT_URL')
+        .and_return(false)
+      allow(ENV).to receive(:has_key?)
+        .with('CIRCLE_REPOSITORY_URL')
         .and_return(false)
       allow(subject).to receive(:caller)
         .and_return(['foo', 'my/path/Rakefile:123'])
-      allow(subject).to receive(:get_git_url_for_directory).with(any_args)
+      allow(subject).to receive(:get_git_url_for_directory)
+        .with(any_args)
         .and_return('my/repo/path')
 
-      expect(subject).to receive(:get_git_url_for_directory).with('my/path')
+      expect(subject).to receive(:get_git_url_for_directory)
+        .with('my/path')
         .once
       expect(subject.get_repo_path).to eq('my/repo/path')
     end
     it 'raises an Exception if #get_git_url_for_directory returns nil' do
-      allow(ENV).to receive(:has_key?).with('GIT_URL').and_return(false)
-      allow(ENV).to receive(:has_key?).with('CIRCLE_REPOSITORY_URL')
+      allow(ENV).to receive(:has_key?)
+        .with('GIT_URL')
+        .and_return(false)
+      allow(ENV).to receive(:has_key?)
+        .with('CIRCLE_REPOSITORY_URL')
         .and_return(false)
       allow(subject).to receive(:caller)
         .and_return(['foo', 'my/path/Rakefile:123'])
       allow(subject).to receive(:get_git_url_for_directory).with(any_args)
-        .and_return(nil)
+                                                           .and_return(nil)
 
       expect(subject).to receive(:get_git_url_for_directory)
         .with('my/path').once
@@ -126,11 +134,11 @@ describe DogTrainer::API do
     it 'returns GIT_URL if set' do
       allow(ENV).to receive(:has_key?).with('GIT_URL').and_return(true)
       allow(ENV).to receive(:has_key?).with('CIRCLE_REPOSITORY_URL')
-        .and_return(true)
+                                      .and_return(true)
 
       allow(ENV).to receive(:[]).with('GIT_URL').and_return('my/git/url')
       allow(ENV).to receive(:[]).with('CIRCLE_REPOSITORY_URL')
-        .and_return('my/circle/url')
+                                .and_return('my/circle/url')
       allow(subject).to receive(:caller)
       allow(subject).to receive(:get_git_url_for_directory)
 
@@ -489,18 +497,20 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
+                                                    .and_return(params)
       allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
-        .and_return(nil)
+                                                              .and_return(nil)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -508,9 +518,9 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to receive(:create_monitor).once
-        .with('mname', params)
+                                                 .with('mname', params)
 
       expect(subject.upsert_monitor(
                'mname',
@@ -525,18 +535,20 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
+                                                    .and_return(params)
       allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
-        .and_return(nil)
+                                                              .and_return(nil)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', { 'warning' => 5.3, 'ok' => 1 },
               escalation_message: 'esc',
               alert_no_data: true,
@@ -545,9 +557,9 @@ describe DogTrainer::API do
               no_data_timeframe: 20,
               evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to receive(:create_monitor).once
-        .with('mname', params)
+                                                 .with('mname', params)
 
       expect(subject.upsert_monitor(
                'mname',
@@ -563,18 +575,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -582,7 +597,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -607,22 +622,26 @@ describe DogTrainer::API do
       }
       dog = double(Dogapi::Client)
       allow(dog).to receive(:update_monitor).with(any_args)
-        .and_return(['200', {}])
+                                            .and_return(['200', {}])
       subject.instance_variable_set('@dog', dog)
-      allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+      allow(subject).to receive(:generate_messages)
+        .with(any_args)
+        .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to receive(:update_monitor).once
-        .with('monid', 'my_query', params)
-      expect(subject).to receive(:generate_messages).once
+                                             .with('monid', 'my_query', params)
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -630,7 +649,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -650,22 +669,25 @@ describe DogTrainer::API do
       }
       dog = double(Dogapi::Client)
       allow(dog).to receive(:update_monitor).with(any_args)
-        .and_return(['200', {}])
+                                            .and_return(['200', {}])
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to receive(:update_monitor).once
-        .with('monid', 'my_query', params)
-      expect(subject).to receive(:generate_messages).once
+                                             .with('monid', 'my_query', params)
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -673,7 +695,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -701,22 +723,25 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
       allow(subject.logger).to receive(:debug).with(any_args)
       allow(subject.logger).to receive(:info).with(any_args)
       allow(subject.logger).to receive(:error).with(any_args)
 
       expect(dog).to receive(:update_monitor).once
-        .with('monid', 'my_query', params)
-      expect(subject).to receive(:generate_messages).once
+                                             .with('monid', 'my_query', params)
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -724,9 +749,10 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
-      expect(subject.logger).to receive(:error).once
+      expect(subject.logger).to receive(:error)
+        .once
         .with("\tError updating monitor monid: #{res}")
 
       expect(subject.upsert_monitor(
@@ -743,18 +769,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: false,
                                                  mon_type: 'metric alert',
@@ -762,7 +791,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -780,18 +809,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'foobar')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'foobar',
@@ -799,7 +831,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -817,18 +849,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -836,7 +871,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -854,18 +889,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -873,7 +911,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 100,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -891,18 +929,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -910,7 +951,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: 234)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -928,18 +969,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -947,7 +991,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -965,18 +1009,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -984,7 +1031,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -1002,18 +1049,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
@@ -1021,7 +1071,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -1040,18 +1090,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'metric alert')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'msg', 'my_query', 123.4, alert_no_data: true,
                                                  mon_type: 'metric alert',
                                                  renotify_interval: 60,
@@ -1059,7 +1112,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 20,
                                                  evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -1077,18 +1130,21 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_monitor).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:generate_messages).with(any_args)
-        .and_return(%w(msg esc))
+                                                   .and_return(%w[msg esc])
       allow(subject).to receive(:params_for_monitor).with(any_args)
-        .and_return(params)
-      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+                                                    .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name)
+        .with(any_args)
         .and_return(existing)
       allow(subject).to receive(:create_monitor).with(any_args)
-        .and_return('12345')
+                                                .and_return('12345')
 
       expect(dog).to_not receive(:update_monitor)
-      expect(subject).to receive(:generate_messages).once
+      expect(subject).to receive(:generate_messages)
+        .once
         .with('mname', '>=', 'service check')
-      expect(subject).to receive(:params_for_monitor).once
+      expect(subject).to receive(:params_for_monitor)
+        .once
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: false,
                                                  mon_type: 'service check',
@@ -1096,7 +1152,7 @@ describe DogTrainer::API do
                                                  no_data_timeframe: 123,
                                                  evaluation_delay: 456)
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mname')
+                                                               .with('mname')
       expect(subject).to_not receive(:create_monitor)
 
       expect(subject.upsert_monitor(
@@ -1123,7 +1179,8 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
       allow(subject.logger).to receive(:error).with(any_args)
 
-      expect(dog).to receive(:monitor).once
+      expect(dog).to receive(:monitor)
+        .once
         .with(params['type'], params['query'], params)
       expect(subject.logger).to_not receive(:error)
       expect(subject.create_monitor('foo', params)).to eq('monid')
@@ -1136,9 +1193,11 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
       allow(subject.logger).to receive(:error).with(any_args)
 
-      expect(dog).to receive(:monitor).once
+      expect(dog).to receive(:monitor)
+        .once
         .with(params['type'], params['query'], params)
-      expect(subject.logger).to receive(:error).once
+      expect(subject.logger).to receive(:error)
+        .once
         .with("\tError creating monitor: #{res}")
       expect(subject.create_monitor('foo', params)).to be_nil
     end
@@ -1154,7 +1213,7 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_monitors).with(any_args)
-        .and_return(monitors)
+                                              .and_return(monitors)
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:get_all_monitors).once.with(group_states: 'all')
@@ -1171,7 +1230,7 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_monitors).with(any_args)
-        .and_return(monitors)
+                                              .and_return(monitors)
       subject.instance_variable_set('@dog', dog)
       subject.instance_variable_set('@monitors', monitors)
 
@@ -1183,7 +1242,7 @@ describe DogTrainer::API do
       monitors = ['200', []]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_monitors).with(any_args)
-        .and_return(monitors)
+                                              .and_return(monitors)
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:get_all_monitors).once.with(group_states: 'all')
@@ -1212,7 +1271,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:mute_monitor).once
-        .with(12_345, end: 6_789)
+                                           .with(12_345, end: 6_789)
       expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_id(12_345, end_timestamp: 6_789)
     end
@@ -1229,7 +1288,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mymon')
+                                                               .with('mymon')
       expect(dog).to receive(:mute_monitor).once.with(5_678)
       expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_name('mymon')
@@ -1245,7 +1304,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mymon')
+                                                               .with('mymon')
       expect(dog).to receive(:mute_monitor).once.with(5_678, end: 1_234)
       expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.mute_monitor_by_name('mymon', end_timestamp: 1_234)
@@ -1260,7 +1319,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mymon')
+                                                               .with('mymon')
       expect(dog).to_not receive(:mute_monitor)
       expect(subject).to_not receive(:check_dog_result)
       expect { subject.mute_monitor_by_name('mymon') }
@@ -1280,9 +1339,11 @@ describe DogTrainer::API do
       allow(subject).to receive(:mute_monitor_by_id)
 
       expect(subject).to receive(:get_monitors).once
-      expect(subject).to receive(:mute_monitor_by_id).once
+      expect(subject).to receive(:mute_monitor_by_id)
+        .once
         .with(1, end_timestamp: nil)
-      expect(subject).to receive(:mute_monitor_by_id).once
+      expect(subject).to receive(:mute_monitor_by_id)
+        .once
         .with(4, end_timestamp: nil)
       subject.mute_monitors_by_regex(/monitor/)
     end
@@ -1297,9 +1358,11 @@ describe DogTrainer::API do
       allow(subject).to receive(:mute_monitor_by_id)
 
       expect(subject).to receive(:get_monitors).once
-      expect(subject).to receive(:mute_monitor_by_id).once
+      expect(subject).to receive(:mute_monitor_by_id)
+        .once
         .with(1, end_timestamp: nil)
-      expect(subject).to receive(:mute_monitor_by_id).once
+      expect(subject).to receive(:mute_monitor_by_id)
+        .once
         .with(4, end_timestamp: nil)
       subject.mute_monitors_by_regex('monitor')
     end
@@ -1314,9 +1377,11 @@ describe DogTrainer::API do
       allow(subject).to receive(:mute_monitor_by_id)
 
       expect(subject).to receive(:get_monitors).once
-      expect(subject).to receive(:mute_monitor_by_id).once
+      expect(subject).to receive(:mute_monitor_by_id)
+        .once
         .with(1, end_timestamp: 1_234)
-      expect(subject).to receive(:mute_monitor_by_id).once
+      expect(subject).to receive(:mute_monitor_by_id)
+        .once
         .with(4, end_timestamp: 1_234)
       subject.mute_monitors_by_regex('monitor', end_timestamp: 1_234)
     end
@@ -1342,7 +1407,7 @@ describe DogTrainer::API do
       subject.instance_variable_set('@dog', dog)
 
       expect(dog).to receive(:unmute_monitor).once
-        .with(12_345, all_scopes: true)
+                                             .with(12_345, all_scopes: true)
       expect(subject).to receive(:check_dog_result).once.with(resp)
       subject.unmute_monitor_by_id(12_345)
     end
@@ -1355,9 +1420,9 @@ describe DogTrainer::API do
         .and_return(monitor)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mymon')
+                                                               .with('mymon')
       expect(subject).to receive(:unmute_monitor_by_id).once
-        .with(5_678)
+                                                       .with(5_678)
       subject.unmute_monitor_by_name('mymon')
     end
     it 'raises error if monitor cannot be found' do
@@ -1366,7 +1431,7 @@ describe DogTrainer::API do
         .and_return(nil)
 
       expect(subject).to receive(:get_existing_monitor_by_name).once
-        .with('mymon')
+                                                               .with('mymon')
       expect(subject).to_not receive(:unmute_monitor_by_id)
       expect { subject.unmute_monitor_by_name('mymon') }
         .to raise_error(RuntimeError,
@@ -1482,7 +1547,7 @@ describe DogTrainer::API do
         'title' => 'gtitle'
       }
       expect(
-        subject.graphdef('gtitle', %w(query1 query2 query3))
+        subject.graphdef('gtitle', %w[query1 query2 query3])
       ).to eq(expected)
     end
     it 'adds markers if specified' do
@@ -1537,13 +1602,14 @@ describe DogTrainer::API do
       allow(dog).to receive(:update_dashboard).with(any_args)
       subject.instance_variable_set('@dog', dog)
       allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
-        .and_return(nil)
+                                                                .and_return(nil)
       allow(subject.logger).to receive(:info).with(any_args)
       allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
-        .with('t')
-      expect(dog).to receive(:create_dashboard).once
+                                                                 .with('t')
+      expect(dog).to receive(:create_dashboard)
+        .once
         .with(
           't',
           'created by DogTrainer RubyGem via my_repo_path',
@@ -1571,13 +1637,14 @@ describe DogTrainer::API do
       allow(dog).to receive(:create_dashboard).with(any_args)
       allow(dog).to receive(:update_dashboard).with(any_args)
       subject.instance_variable_set('@dog', dog)
-      allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
+      allow(subject).to receive(:get_existing_timeboard_by_name)
+        .with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
       allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
-        .with('t')
+                                                                 .with('t')
       expect(dog).to_not receive(:create_dashboard)
       expect(dog).to_not receive(:update_dashboard)
       expect(subject.logger).to receive(:info).with("\tTimeboard is up-to-date")
@@ -1601,13 +1668,14 @@ describe DogTrainer::API do
       allow(dog).to receive(:create_dashboard).with(any_args)
       allow(dog).to receive(:update_dashboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
-      allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
+      allow(subject).to receive(:get_existing_timeboard_by_name)
+        .with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
       allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
-        .with('t')
+                                                                 .with('t')
       expect(dog).to_not receive(:create_dashboard)
       expect(dog).to receive(:update_dashboard).once.with(
         res[1]['dash']['id'],
@@ -1637,13 +1705,14 @@ describe DogTrainer::API do
       allow(dog).to receive(:create_dashboard).with(any_args)
       allow(dog).to receive(:update_dashboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
-      allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
+      allow(subject).to receive(:get_existing_timeboard_by_name)
+        .with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
       allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
-        .with('t')
+                                                                 .with('t')
       expect(dog).to_not receive(:create_dashboard)
       expect(dog).to receive(:update_dashboard).once.with(
         res[1]['dash']['id'],
@@ -1673,13 +1742,14 @@ describe DogTrainer::API do
       allow(dog).to receive(:create_dashboard).with(any_args)
       allow(dog).to receive(:update_dashboard).with(any_args).and_return(res)
       subject.instance_variable_set('@dog', dog)
-      allow(subject).to receive(:get_existing_timeboard_by_name).with(any_args)
+      allow(subject).to receive(:get_existing_timeboard_by_name)
+        .with(any_args)
         .and_return(res[1])
       allow(subject.logger).to receive(:info).with(any_args)
       allow(subject).to receive(:check_dog_result)
 
       expect(subject).to receive(:get_existing_timeboard_by_name).once
-        .with('t')
+                                                                 .with('t')
       expect(dog).to_not receive(:create_dashboard)
       expect(dog).to receive(:update_dashboard).once.with(
         res[1]['dash']['id'],
@@ -1714,8 +1784,9 @@ describe DogTrainer::API do
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
-        .with('t')
-      expect(dog).to receive(:create_screenboard).once
+                                                                   .with('t')
+      expect(dog).to receive(:create_screenboard)
+        .once
         .with(
           board_title: 't',
           description: 'created by DogTrainer RubyGem via my_repo_path',
@@ -1746,7 +1817,7 @@ describe DogTrainer::API do
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
-        .with('t')
+                                                                   .with('t')
       expect(dog).to_not receive(:create_screenboard)
       expect(dog).to_not receive(:update_screenboard)
       expect(subject.logger).to receive(:info)
@@ -1774,9 +1845,10 @@ describe DogTrainer::API do
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
-        .with('t')
+                                                                   .with('t')
       expect(dog).to_not receive(:create_screenboard)
-      expect(dog).to_not receive(:update_screenboard).once
+      expect(dog).to_not receive(:update_screenboard)
+        .once
         .with(
           'id1',
           board_title: 't',
@@ -1807,9 +1879,10 @@ describe DogTrainer::API do
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
-        .with('t')
+                                                                   .with('t')
       expect(dog).to_not receive(:create_screenboard)
-      expect(dog).to_not receive(:update_screenboard).once
+      expect(dog).to_not receive(:update_screenboard)
+        .once
         .with(
           'id1',
           board_title: 't',
@@ -1840,9 +1913,10 @@ describe DogTrainer::API do
       allow(subject.logger).to receive(:info).with(any_args)
 
       expect(subject).to receive(:get_existing_screenboard_by_name).once
-        .with('t')
+                                                                   .with('t')
       expect(dog).to_not receive(:create_screenboard)
-      expect(dog).to_not receive(:update_screenboard).once
+      expect(dog).to_not receive(:update_screenboard)
+        .once
         .with(
           'id1',
           board_title: 't',
@@ -1868,7 +1942,7 @@ describe DogTrainer::API do
       board = ['200', { 'foo' => 'bar', 'baz' => 'blam' }]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_dashboards).with(any_args)
-        .and_return(boards)
+                                            .and_return(boards)
       allow(dog).to receive(:get_dashboard).with(any_args).and_return(board)
       subject.instance_variable_set('@dog', dog)
 
@@ -1891,7 +1965,7 @@ describe DogTrainer::API do
       board = ['200', { 'foo' => 'bar', 'baz' => 'blam' }]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_dashboards).with(any_args)
-        .and_return(boards)
+                                            .and_return(boards)
       allow(dog).to receive(:get_dashboard).with(any_args).and_return(board)
       subject.instance_variable_set('@dog', dog)
       subject.instance_variable_set('@timeboards', boards)
@@ -1915,7 +1989,7 @@ describe DogTrainer::API do
       board = ['200', { 'foo' => 'bar', 'baz' => 'blam' }]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_dashboards).with(any_args)
-        .and_return(boards)
+                                            .and_return(boards)
       allow(dog).to receive(:get_dashboard).with(any_args).and_return(board)
       subject.instance_variable_set('@dog', dog)
       subject.instance_variable_set('@timeboards', boards)
@@ -1935,7 +2009,7 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_dashboards).with(any_args)
-        .and_return(boards)
+                                            .and_return(boards)
       allow(dog).to receive(:get_dashboard).with(any_args)
       subject.instance_variable_set('@dog', dog)
 
@@ -1959,7 +2033,7 @@ describe DogTrainer::API do
       board = ['200', { 'foo' => 'bar', 'baz' => 'blam' }]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_screenboards).with(any_args)
-        .and_return(boards)
+                                                  .and_return(boards)
       allow(dog).to receive(:get_screenboard).with(any_args).and_return(board)
       subject.instance_variable_set('@dog', dog)
 
@@ -1982,7 +2056,7 @@ describe DogTrainer::API do
       board = ['200', { 'foo' => 'bar', 'baz' => 'blam' }]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_screenboards).with(any_args)
-        .and_return(boards)
+                                                  .and_return(boards)
       allow(dog).to receive(:get_screenboard).with(any_args).and_return(board)
       subject.instance_variable_set('@dog', dog)
       subject.instance_variable_set('@screenboards', boards)
@@ -2006,7 +2080,7 @@ describe DogTrainer::API do
       board = ['200', { 'foo' => 'bar', 'baz' => 'blam' }]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_screenboards).with(any_args)
-        .and_return(boards)
+                                                  .and_return(boards)
       allow(dog).to receive(:get_screenboard).with(any_args).and_return(board)
       subject.instance_variable_set('@dog', dog)
       subject.instance_variable_set('@screenboards', boards)
@@ -2026,7 +2100,7 @@ describe DogTrainer::API do
       ]
       dog = double(Dogapi::Client)
       allow(dog).to receive(:get_all_screenboards).with(any_args)
-        .and_return(boards)
+                                                  .and_return(boards)
       allow(dog).to receive(:get_screenboard).with(any_args)
       subject.instance_variable_set('@dog', dog)
 

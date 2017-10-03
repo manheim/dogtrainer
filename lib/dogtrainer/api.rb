@@ -62,7 +62,7 @@ module DogTrainer
     #
     # If none of these are found, an error will be raised.
     def get_repo_path
-      %w(GIT_URL CIRCLE_REPOSITORY_URL).each do |vname|
+      %w[GIT_URL CIRCLE_REPOSITORY_URL].each do |vname|
         return ENV[vname] if ENV.has_key?(vname) && !ENV[vname].empty?
       end
       # try to find git repository
