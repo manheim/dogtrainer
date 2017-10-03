@@ -102,12 +102,15 @@ puts "aws.ec2.host_ok monitor id: #{id}"
 Metric alert, also alerting on missing data:
 
 ```ruby
-# alert if 'MY_ASG_NAME' ASG in service instances < 2
+# alert if 'MY_ASG_NAME' ASG in service instances < 2; set no_data_timeframe
+# to 60 minutes and evaluation_delay to 900 seconds, for sparse AWS metrics
 dog.upsert_monitor(
   "ASG In-Service Instances",
   "avg(last_5m):sum:aws.autoscaling.group_in_service_instances{autoscaling_group:MY_ASG_NAME} < 2",
   2,
-  '>='
+  '>=',
+  no_data_timeframe: 60,
+  evaluation_delay: 900
 )
 ```
 
