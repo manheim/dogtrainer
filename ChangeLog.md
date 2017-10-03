@@ -1,3 +1,8 @@
+Version 0.4.0
+
+  - Added support for ``:no_data_timeframe`` and ``:evaluation_delay`` options
+    on monitors.
+
 Version 0.3.0
 
   - Added ``DogTrainer::DogApiException`` custom exception class, subclass of ``StandardError``.

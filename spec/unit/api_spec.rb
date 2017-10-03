@@ -330,6 +330,61 @@ describe DogTrainer::API do
                renotify_interval: 120
       )).to eq(expected)
     end
+    it 'sets no_data_timeframe if provided in options' do
+      expected = {
+        'name' => 'monname',
+        'type' => 'metric alert',
+        'query' => 'my_query',
+        'message' => 'my_msg',
+        'tags' => [],
+        'options' => {
+          'notify_audit' => false,
+          'locked' => false,
+          'timeout_h' => 0,
+          'silenced' => {},
+          'thresholds' => { 'critical' => 123.4 },
+          'require_full_window' => false,
+          'notify_no_data' => true,
+          'renotify_interval' => 60,
+          'no_data_timeframe' => 66
+        }
+      }
+      expect(subject.params_for_monitor(
+               'monname',
+               'my_msg',
+               'my_query',
+               123.4,
+               no_data_timeframe: 66
+      )).to eq(expected)
+    end
+    it 'sets evaluation_delay if provided in options' do
+      expected = {
+        'name' => 'monname',
+        'type' => 'metric alert',
+        'query' => 'my_query',
+        'message' => 'my_msg',
+        'tags' => [],
+        'options' => {
+          'notify_audit' => false,
+          'locked' => false,
+          'timeout_h' => 0,
+          'silenced' => {},
+          'thresholds' => { 'critical' => 123.4 },
+          'require_full_window' => false,
+          'notify_no_data' => true,
+          'renotify_interval' => 60,
+          'no_data_timeframe' => 20,
+          'evaluation_delay' => 900
+        }
+      }
+      expect(subject.params_for_monitor(
+               'monname',
+               'my_msg',
+               'my_query',
+               123.4,
+               evaluation_delay: 900
+      )).to eq(expected)
+    end
     it 'passes through a threshold Hash' do
       expected = {
         'name' => 'monname',
@@ -408,8 +463,9 @@ describe DogTrainer::API do
           'require_full_window' => false,
           'notify_no_data' => false,
           'renotify_interval' => 123,
-          'no_data_timeframe' => 20,
-          'escalation_message' => 'myesc'
+          'no_data_timeframe' => 60,
+          'escalation_message' => 'myesc',
+          'evaluation_delay' => 345
         }
       }
       expect(subject.params_for_monitor(
@@ -420,7 +476,9 @@ describe DogTrainer::API do
                alert_no_data: false,
                mon_type: 'foo',
                escalation_message: 'myesc',
-               renotify_interval: 123
+               renotify_interval: 123,
+               no_data_timeframe: 60,
+               evaluation_delay: 345
       )).to eq(expected)
     end
   end
@@ -446,7 +504,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to receive(:create_monitor).once
@@ -481,7 +541,9 @@ describe DogTrainer::API do
               escalation_message: 'esc',
               alert_no_data: true,
               mon_type: 'metric alert',
-              renotify_interval: 60)
+              renotify_interval: 60,
+              no_data_timeframe: 20,
+              evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to receive(:create_monitor).once
@@ -516,7 +578,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -562,7 +626,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -603,7 +669,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -652,7 +720,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -688,7 +758,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: false,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -723,7 +795,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'foobar',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -758,7 +832,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 100)
+                                                 renotify_interval: 100,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -769,6 +845,80 @@ describe DogTrainer::API do
                123.4,
                '>=',
                renotify_interval: 100
+      )).to eq('monid')
+    end
+    it 'handles sparse options, with only no_data_timeframe' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(existing)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
+                                                 alert_no_data: true,
+                                                 mon_type: 'metric alert',
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 100,
+                                                 evaluation_delay: nil)
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to_not receive(:create_monitor)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               123.4,
+               '>=',
+               no_data_timeframe: 100
+      )).to eq('monid')
+    end
+    it 'handles sparse options, with only evaluation_delay' do
+      params = { 'foo' => 'bar', 'baz' => 'blam' }
+      existing = { 'foo' => 'bar', 'baz' => 'blam', 'id' => 'monid' }
+      dog = double(Dogapi::Client)
+      allow(dog).to receive(:update_monitor).with(any_args)
+      subject.instance_variable_set('@dog', dog)
+      allow(subject).to receive(:generate_messages).with(any_args)
+        .and_return(%w(msg esc))
+      allow(subject).to receive(:params_for_monitor).with(any_args)
+        .and_return(params)
+      allow(subject).to receive(:get_existing_monitor_by_name).with(any_args)
+        .and_return(existing)
+      allow(subject).to receive(:create_monitor).with(any_args)
+        .and_return('12345')
+
+      expect(dog).to_not receive(:update_monitor)
+      expect(subject).to receive(:generate_messages).once
+        .with('mname', '>=', 'metric alert')
+      expect(subject).to receive(:params_for_monitor).once
+        .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'esc',
+                                                 alert_no_data: true,
+                                                 mon_type: 'metric alert',
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: 234)
+      expect(subject).to receive(:get_existing_monitor_by_name).once
+        .with('mname')
+      expect(subject).to_not receive(:create_monitor)
+
+      expect(subject.upsert_monitor(
+               'mname',
+               'my_query',
+               123.4,
+               '>=',
+               evaluation_delay: 234
       )).to eq('monid')
     end
     it 'handles sparse options, with only message' do
@@ -793,7 +943,9 @@ describe DogTrainer::API do
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'esc',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -828,7 +980,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -863,7 +1017,9 @@ describe DogTrainer::API do
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: true,
                                                  mon_type: 'metric alert',
-                                                 renotify_interval: 60)
+                                                 renotify_interval: 60,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -899,7 +1055,9 @@ describe DogTrainer::API do
         .with('mname', 'msg', 'my_query', 123.4, alert_no_data: true,
                                                  mon_type: 'metric alert',
                                                  renotify_interval: 60,
-                                                 escalation_message: nil)
+                                                 escalation_message: nil,
+                                                 no_data_timeframe: 20,
+                                                 evaluation_delay: nil)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -934,7 +1092,9 @@ describe DogTrainer::API do
         .with('mname', 'foo', 'my_query', 123.4, escalation_message: 'bar',
                                                  alert_no_data: false,
                                                  mon_type: 'service check',
-                                                 renotify_interval: 10)
+                                                 renotify_interval: 10,
+                                                 no_data_timeframe: 123,
+                                                 evaluation_delay: 456)
       expect(subject).to receive(:get_existing_monitor_by_name).once
         .with('mname')
       expect(subject).to_not receive(:create_monitor)
@@ -948,7 +1108,9 @@ describe DogTrainer::API do
                alert_no_data: false,
                mon_type: 'service check',
                message: 'foo',
-               escalation_message: 'bar'
+               escalation_message: 'bar',
+               no_data_timeframe: 123,
+               evaluation_delay: 456
       )).to eq('monid')
     end
   end
