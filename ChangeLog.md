@@ -1,3 +1,7 @@
+Version 0.4.2
+
+  - **This gem is considered deprecated by its authors; we do not plan on releasing any future versions and no longer intend on supporting it.** Internally, we have mostly switched to using the [Datadog Terraform provider](https://www.terraform.io/docs/providers/datadog/index.html).
+
 Version 0.4.1
 
   - Upgrade rubocop and yard development dependency versions
