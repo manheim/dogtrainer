@@ -1,4 +1,6 @@
-# dogtrainer
+# DEPRECATED - dogtrainer
+
+**This gem is considered deprecated by its authors; we do not plan on releasing any future versions and no longer intend on supporting it.** Internally, we have mostly switched to using the [Datadog Terraform provider](https://www.terraform.io/docs/providers/datadog/index.html).
 
 Build of master branch: [![CircleCI](https://circleci.com/gh/manheim/dogtrainer.svg?style=svg)](https://circleci.com/gh/manheim/dogtrainer)
 
